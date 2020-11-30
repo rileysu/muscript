@@ -1,3 +1,5 @@
+std = import std;
+
 o = {
   a: Integer = 1,
   b: Decimal = 1.2,
@@ -5,8 +7,11 @@ o = {
   d: Set = <1, 2, 3>
 };
 
-f: { a: Integer, b: Integer } -> Integer = @{
-  return (add a b);
+f: Integer -> Integer -> Integer = @a {
+  o = { attr = 1 };
+  out = add a b;
 };
 
-print (f { a = o.a, b = 2 });
+long_function 1 2.5 3. 'Hello' (compound 1 2);
+
+std.print std.capitalise 'Hello World';

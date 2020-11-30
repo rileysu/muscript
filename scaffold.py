@@ -1,7 +1,9 @@
 from lexer import Lexer, Token, TokenClass
+from parser import Parser, TreeTransformer
+from state import ExecutionEnvironment, Scope
 #from parser import Parser
 
-token_classes = [TokenClass('@{', 'function_open'),
+token_classes = [TokenClass('@{', 'open_function'),
         TokenClass('\\{', 'open_curlybrace'),
         TokenClass('\\}', 'close_curlybrace'),
         TokenClass('\\(', 'open_parenthesis'),
@@ -23,14 +25,20 @@ token_classes = [TokenClass('@{', 'function_open'),
 ignore_classes = [TokenClass('\\s', 'whitespace')]
 
 lexer = Lexer(token_classes, ignore_classes)
-#parser = Parser()
+parser = Parser()
 
-with open('example.mu') as f:
+with open('example2.mu') as f:
     text = f.read()
 
-    tokens = lexer.parse(text)
-    
-    for token in tokens:
-        print(token)
+    tree = parser.parse(text)
+    statements = TreeTransformer().transform(tree)
 
-    #print(parser.parse(tokens))
+    scope = Scope({})
+    env = ExecutionEnvironment(scope)
+
+    print(tree.pretty())
+
+    env.execute(statements)
+
+    for matter in scope.map:
+        print(scope.map[matter].value)

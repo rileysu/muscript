@@ -1,10 +1,11 @@
-from lexer import Token
+from lark import Lark, Transformer
+from state import Integer, Decimal, String, List, Set, Object, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
 
 # -=Molecules=-
 # Statement - an action that may mutate state and doesn't return a value
 # Statement -> Identifier [Type Expression] Assign Expression | Function Expression+
 # Expression - an action that may mutate state that does return a value
-# Expression -> (Identifier | Constant | Expression Arrow Expression | Function Expression | Identifier [Type Expression] Assign Expression) [Expression]
+# Expression -> (Identifier | Constant | Expression Arrow Expression | Function Expression+) [Expression]
 ## Matter - An assignable piece of state (open to new mutable data in the future)
 ## Matter -> Identifier
 # Function - A list of statements
@@ -22,226 +23,164 @@ from lexer import Token
 #   curr_node is always the deepest node needed to be satisfied
 #   token is the recognised token object with associated value
 
-class ParseNode:
-    def __init__(self, name, value, parent, children):
-        self.name = name
-        self.value = value
-        self.parent = parent
-        self.children = children
+class TreeTransformer(Transformer):
+    def integer(self, values):
+        return Integer(int(values[0]))
+    
+    def decimal(self, values):
+        return Decimal(float(values[0]))
 
-        for child in children:
-            child.parent = self
+    def string(self, values):
+        return String(values[0].replace('\'', ''))
 
-    def __repr__(self, depth=0):
-        out = ('\t' * depth) + 'ParseNode(name=\'' + self.name + '\', value=' + str(self.value) + ', parent=\'' + (self.parent.name if self.parent else 'None') + '\', children=' + str(len(self.children)) + ')\n'
+    
+    def list(self, values):
+        return List(values)
 
-        for child in self.children:
-            out += child.__repr__(depth+1)
+    def set(self, values):
+        return Set(values)
+
+    def object_definition(self, values):
+        out = {
+            'name': 'object_definition',
+            'identifier': None,
+            'type': None,
+            'value': None
+        }
+
+        for value in values:
+            if value['name'] == 'identifier':
+                out['identifier'] = value
+            elif value['name'] == 'type_definition':
+                out['type'] = value['expression']
+            elif value['name'] == 'assign_definition':
+                out['value'] = value['expression']
 
         return out
 
-def proc_function_open(token, curr_node):
-    new_node = ParseNode('function', None, curr_node, []) 
-    
-    curr_node.parent.children.append(new_node)
+    def object(self, values):
+        return Object(values)
 
-    return new_node
+    def variable(self, values):
+        return Variable(values)
 
-def proc_open_curlybrace(token, curr_node):
-    new_node = ParseNode('object', None, curr_node, [])
-    
-    curr_node.parent.children.append(new_node)
+    def name(self, values):
+        return values[0].value
 
-    return new_node
+    def identifier(self, values):
+        return {
+                'name': 'identifier',
+                'values': values
+        }
 
-def proc_close_curlybrace(token, curr_node):
-    if curr_node.parent:
-        if curr_node.parent.name == 'function' or curr_node.parent.name == 'object':
-            return curr_node.parent
-        else:
-            pass #Syntax Error
-    else:
-        pass #Syntax Error
-            
-def proc_open_parenthesis(token, curr_node):
-    new_node = ParseNode('parenthesis', None, curr_node, [])
+    def function_type(self, values):
+        return FunctionType(values)
 
-    return new_node
+    def function_bind(self, values):
+        return values[0]
 
-def proc_close_parenthesis(token, curr_node):
-    if curr_node.parent:
-        if curr_node.parent.name == 'parenthesis':
-            return curr_node.parent
-        else:
-            pass #Syntax Error
-    else:
-        pass #Syntax Error
+    def function(self, values):
+        return Function(values[0], values[1:])
 
-def proc_open_squarebrace(token, curr_node):
-    new_node = ParseNode('list', None, curr_node.parent, [])
+    def type_definition(self, values):
+        return {
+            'name': 'type_definition',
+            'expression': values[0]
+        }
 
-    curr_node.parent.children.append(new_node)
+    def assign_definition(self, values):
+        return {
+            'name': 'assign_definition',
+            'expression': values[0]
+        }
 
-    return new_node
+    def expression(self, values):
+        return Expression(values)
 
-def proc_close_squarebrace(token, curr_node):
-    if curr_node.parent:
-        if curr_node.parent.name == 'list':
-            return curr_node.parent
-        else:
-            pass #Syntax Error
-    else:
-        pass #Syntax Error
+    def matter_statement(self, values):
+        identifier = None
+        assign = None
+        type = None
+        
+        for value in values:
+            if value['name'] == 'identifier':
+                identifier = value['values']
+            elif value['name'] == 'type_definition':
+                type = value['expression']
+            elif value['name'] == 'assign_definition':
+                assign = value['expression']
 
-def proc_open_anglebrace(token, curr_node):
-    new_node = ParseNode('set', None, curr_node.parent, [])
+        return MatterStatement(identifier, assign, type)
 
-    curr_node.parent.children.append(new_node)
-    
-    return new_node
+    def expression_statement(self, values):
+        return ExpressionStatement(values[0])
 
-def proc_close_anglebrace(token, curr_node):
-    if curr_node.parent:
-        if curr_node.parent.name == 'set':
-            return curr_node.parent
-        else:
-            pass #Syntax Error
-    else:
-        pass #Syntax Error
-
-def proc_colon(token, curr_node):
-    new_node = ParseNode('type', None, curr_node.parent, [])
-
-    curr_node.parent.children.append(new_node)
-
-    return new_node
-
-def proc_equals(token, curr_node):
-    new_node = ParseNode('assign', None, curr_node.parent, [])
-
-    curr_node.parent.children.append(new_node)
-    
-    return new_node
-  
-def proc_comma(token, curr_node):
-    new_node = ParseNode('seperator', None, curr_node.parent, [])
-
-    curr_node.parent.children.append(new_node)
-
-    return new_node
-
-def proc_dot(token, curr_node):
-    new_node = ParseNode('access', None, curr_node, [])
-
-    curr_node.children.append(new_node)
-
-    return new_node
-
-def proc_semicolon(token, curr_node):
-    explore_node = curr_node
-    
-    while explore_node != None:
-        if explore_node.name == 'statement':
-            parent_node = explore_node.parent
-
-            if parent_node:
-                return parent_node
-            else:
-                quit(1) #Syntax Error
-
-        explore_node = explore_node.parent
-
-    quit(1) #Syntax Error
-
-def proc_function_arrow(token, curr_node):
-    if curr_node.name == 'expression':
-        new_node = ParseNode('function_arrow', None, curr_node, [])
-
-        curr_node.children.append(new_node)
-
-        return curr_node
-    else:
-        quit(1) #Syntax Error
-
-def proc_decimal(token, curr_node):
-    if curr_node == 'expression' and curr_node.children == []:
-        curr_node.children.append(ParseNode('constant', ('decimal', float(token.value)), curr_node, []))
-
-        return curr_node
-    else:
-        quit(1) #Syntax Error
-
-def proc_integer(token, curr_node):
-    if curr_node == 'expression' and curr_node.children == []:
-        curr_node.children.append(ParseNode('constant', ('integer', int(token.value)), curr_node, []))
-
-        return curr_node
-    else:
-        quit(1) #Syntax Error
-
-def proc_identitifier(token, curr_node):
-    if curr_node.name == 'statement' and curr_node.children == []:
-        new_node = ParseNode('identifier', str(token.value), curr_node, [])
-
-        curr_node.children.append(new_node)
-
-        return curr_node
-    else:
-        new_node = ParseNode('expression', None, curr_node, [
-            ParseNode('identifier', str(token.value), curr_node, [])
-        ])
-
-        curr_node.children.append(new_node)
-
-        return new_node
-    else:
-        quit(1) #Syntax Error
+    def start(self, values):
+        return values
 
 class Parser:
     def __init__(self):
-        self.token_map = {
-                'function_open': proc_function_open,
-                'open_curlybrace': proc_open_curlybrace,
-                'close_curlybrace': proc_close_curlybrace,
-                'open_parenthesis': proc_open_parenthesis,
-                'close_parenthesis': proc_close_parenthesis,
-                'open_squarebrace': proc_open_squarebrace,
-                'close_squarebrace': proc_close_squarebrace,
-                'open_anglebrace': proc_open_anglebrace,
-                'close_anglebrace': proc_close_anglebrace,
-                'colon': proc_colon,
-                'equals': proc_equals,
-                'comma': proc_comma,
-                'dot': proc_dot,
-                'semicolon': proc_semicolon,
-                'function_arrow': proc_function_arrow,
-                'decimal': proc_decimal,
-                'integer': proc_integer,
-                'identifier': proc_identitifier}
+        self.lark = Lark("""
+            start: statement+
 
-    #self.verifiers = {
-    #    'statement': verify_statement,
-    #    'expression': verify_expression,
-    #    'matter': verify_matter,
-    #    'function': verify_function
-    #}
-
-    def parse(self, tokens):
-        main_func = ParseNode('function', None, None, [
-            ParseNode('statement', None, None, [])
-        ])
-
-        curr_node = main_func.children[0].children[0]
-
-        for token in tokens:
-            if token.name in self.token_map.keys()
-                curr_node = self.token_map[token.name](token, curr_node)
+            type_definition : _type expression
+            assign_definition : _assign expression
+            matter_statement: identifier type_definition? assign_definition
+            expression_statement: expression
+            ?statement : (matter_statement | expression_statement) _end_statement
             
-            print(token)
-            print(tree)
+            function_type : _base_expression (_function_arrow _base_expression)+
+            _base_expression : (variable
+                | constant
+                | function
+                | list
+                | set 
+                | object
+                | (_open_paren expression _close_paren))
+            expression : (function_type | _base_expression)+
 
-            #if curr_node.name in self.verifiers.keys():
-            #    if self.verifiers[curr_node.name]:
-            #        curr_node = curr_node.parent            
+            function : _open_function statement+ _close_function
 
-        return tree
+            list : _open_list [expression (_seperator expression)*] _close_list
+            
+            set : _open_set [expression (_seperator expression)*] _close_set
+           
+            object_definition : identifier type_definition? assign_definition
+            object : _open_object [object_definition (_seperator object_definition)*] _close_object
+
+            ?constant : integer | decimal | string
+
+            identifier : name (_access name)*
+            variable: name (_access name)*
+           
+            function_bind : name
+            _open_function : "@" function_bind  "{"
+
+            _seperator : ","
+            _type : ":"
+            _assign : "="
+            _access: "."
+            name : /[a-zA-Z_]\w*/
+            _function_arrow : "->"
+            integer : /\d+/
+            decimal : /\d+\.\d*/
+            string : /\'.*\'/
+
+            _end_statement : ";"
+            _close_function : _close_curly_brace
+            _open_list : "["
+            _close_list : "]"
+            _open_set : "<"
+            _close_set : ">"
+            _open_paren : "("
+            _close_paren : ")"
+            _open_object : "{"
+            _close_object : _close_curly_brace
+            _close_curly_brace : "}"
+
+            %import common.WS
+            %ignore WS
+        """, parser="lalr")
+
+    def parse(self, text):
+        return self.lark.parse(text)
