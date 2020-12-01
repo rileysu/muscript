@@ -1,29 +1,31 @@
+from concrete import Concrete, ConcreteInteger, ConcreteDecimal, ConcreteString, ConcreteList, ConcreteSet, ConcreteObject, ConcreteFunction
+
 class Value():
     def __init__(self, value):
         self.value = value
 
-    def coalesce(self, value):
-        return value
-
     def evaluate(self, scope):
-        return self.value
+        return Concrete(self.value)
 
 class Integer(Value):
-    pass
+    def evaluate(self, scope):
+        return ConcreteInteger(self.value)
 
 class Decimal(Value):
-    pass
+    def evaluate(self, scope):
+        return ConcreteDecimal(self.value)
 
 class String(Value):
-    pass
+    def evaluate(self, scope):
+        return ConcreteString(self.value)
 
 class List(Value):
     def evaluate(self, scope):
-        return list(map(lambda x: x.evaluate(scope), self.value))
+        return ConcreteList(list(map(lambda x: x.evaluate(scope), self.value)))
 
 class Set(Value):
     def evaluate(self, scope):
-        return set(map(lambda x: x.evaluate(scope), self.value))
+        return ConcreteSet(set(map(lambda x: x.evaluate(scope), self.value)))
 
 class Object(Value):
     def __init__(self, values):
@@ -37,11 +39,12 @@ class Object(Value):
     
     def evaluate(self, scope):
         out = {}
+
         for key in self.values:
             #Ignore type check until implemented
             out[key] = self.values[key]
 
-        return out
+        return ConcreteObject(out)
 
 
 class Variable(Value):
@@ -51,8 +54,9 @@ class Variable(Value):
             out = scope.get_key(self.value[0])
 
             for name in self.value[1:]:
-                out = out[name]
-        
+                #Quick hack since objects use Matter
+                out = out.value[name].value
+
             return out
         else:
             quit('Undefined Variable: ' + str(self.value)) #Undeclared identifier
@@ -69,9 +73,7 @@ class Expression(Value):
 
         for value in self.value:
             if out:
-                out.coalesce(scope, value)
-                #Temp stub
-                out = value.evaluate(scope)
+                out = out.coalesce(scope, value.evaluate(scope))
             else:
                 out = value.evaluate(scope)
 
@@ -88,26 +90,8 @@ class Function(Value):
         self.statements = statements
         self.argument = None
 
-    def coalesce(self, scope, value):
-        print(self.argument)
-        if not self.argument:
-            self.argument = value
-            return self.evaluate(scope)
-        else:
-            # Too many arguments provided
-            # In the end this should coalesce the types
-            # For now ill just return the second value
-            return value
-            
-
     def evaluate(self, scope):
-        if self.argument:
-            new_scope = scope.copy()
-            new_scope.set_key(self.bind, self.argument.evaluate(scope))
-            env = ExecutionEnvironment(scope.copy())
-            env.execute(self.statements)
-        else:
-            return self
+            return ConcreteFunction(self.bind, self.statements)
 
 class Statement():
     def __init__(self):
@@ -135,36 +119,3 @@ class ExpressionStatement(Statement):
 
     def execute(self, scope):
         self.expression.evaluate(scope)
-
-class Matter():
-    def __init__(self, value, type):
-        self.value = value
-        self.type = type
-
-class Scope():
-    def __init__(self, init):
-        self.map = init
-
-    def get_key(self, key):
-        return self.map[key].value
-
-    def get_key_type(self, key):
-        return self.map[key].type
-
-    def set_key(self, key, value, type=None):
-        self.map[key] = Matter(value, type)
-
-    def has_key(self, key):
-        return key in self.map
-
-    def copy(self):
-        return Scope(self.map.copy())
-
-class ExecutionEnvironment():
-    def __init__(self, scope):
-        self.scope = scope
-
-    def execute(self, statements):
-        for statement in statements:
-            statement.execute(self.scope)
-

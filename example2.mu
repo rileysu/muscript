@@ -1,14 +1,13 @@
-a = 1;
-b = 2.2;
-c = 'Hello';
-d = [1, 2, 3];
-e = <1, 2, 3>;
-f = {
-  a = 1,
-  b = 2
+std = import 'std';
+
+f = @x {
+  std.print x;
 };
-g = @a {
-  other = a;
-  other = non_existant;
-};
-h = g 1;
+
+identity = @x {
+  out = x;
+}
+
+std.print 'Hello World!';
+
+std.print (identity 'Hello World 2');

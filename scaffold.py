@@ -1,6 +1,7 @@
 from lexer import Lexer, Token, TokenClass
 from parser import Parser, TreeTransformer
-from state import ExecutionEnvironment, Scope
+from execution import ExecutionEnvironment, Scope
+from environment import init_scope
 #from parser import Parser
 
 token_classes = [TokenClass('@{', 'open_function'),
@@ -33,12 +34,12 @@ with open('example2.mu') as f:
     tree = parser.parse(text)
     statements = TreeTransformer().transform(tree)
 
-    scope = Scope({})
+    scope = Scope(init_scope)
     env = ExecutionEnvironment(scope)
 
     print(tree.pretty())
 
     env.execute(statements)
 
-    for matter in scope.map:
-        print(scope.map[matter].value)
+    #for matter in scope.map:
+    #    print(scope.map[matter].value)

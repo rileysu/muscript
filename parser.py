@@ -164,7 +164,7 @@ class Parser:
             _function_arrow : "->"
             integer : /\d+/
             decimal : /\d+\.\d*/
-            string : /\'.*\'/
+            string : /\'[^\']*\'/
 
             _end_statement : ";"
             _close_function : _close_curly_brace
