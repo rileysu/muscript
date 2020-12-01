@@ -1,4 +1,4 @@
-from concrete import Concrete, ConcreteInteger, ConcreteDecimal, ConcreteString, ConcreteList, ConcreteSet, ConcreteObject, ConcreteFunction
+from concrete import Concrete, ConcreteInteger, ConcreteDecimal, ConcreteString, ConcreteList, ConcreteSet, ConcreteObject, ConcreteEmpty, ConcreteFunction
 
 class Value():
     def __init__(self, value):
@@ -46,6 +46,12 @@ class Object(Value):
 
         return ConcreteObject(out)
 
+class Empty(Value):
+    def __init__(self, value=None):
+        super().__init__(value)
+
+    def evaluate(self, scope):
+        return ConcreteEmpty(self.value)
 
 class Variable(Value):
     def evaluate(self, scope):
@@ -91,7 +97,7 @@ class Function(Value):
         self.argument = None
 
     def evaluate(self, scope):
-            return ConcreteFunction(self.bind, self.statements)
+            return ConcreteFunction(scope, self.bind, self.statements)
 
 class Statement():
     def __init__(self):

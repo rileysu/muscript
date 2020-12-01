@@ -42,4 +42,5 @@ with open('example2.mu') as f:
     env.execute(statements)
 
     #for matter in scope.map:
-    #    print(scope.map[matter].value)
+    #    print(matter)
+    #    print(scope.map[matter])

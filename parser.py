@@ -1,5 +1,5 @@
 from lark import Lark, Transformer
-from state import Integer, Decimal, String, List, Set, Object, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
+from state import Integer, Decimal, String, List, Set, Object, Empty, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
 
 # -=Molecules=-
 # Statement - an action that may mutate state and doesn't return a value
@@ -61,6 +61,9 @@ class TreeTransformer(Transformer):
     def object(self, values):
         return Object(values)
 
+    def empty_value(self, values):
+        return Empty()
+
     def variable(self, values):
         return Variable(values)
 
@@ -77,7 +80,7 @@ class TreeTransformer(Transformer):
         return FunctionType(values)
 
     def function_bind(self, values):
-        return values[0]
+        return values[0] if values else None
 
     def function(self, values):
         return Function(values[0], values[1:])
@@ -130,7 +133,9 @@ class Parser:
             ?statement : (matter_statement | expression_statement) _end_statement
             
             function_type : _base_expression (_function_arrow _base_expression)+
-            _base_expression : (variable
+            empty_value : _open_paren _close_paren
+            _base_expression : (empty_value
+                | variable
                 | constant
                 | function
                 | list
@@ -153,7 +158,7 @@ class Parser:
             identifier : name (_access name)*
             variable: name (_access name)*
            
-            function_bind : name
+            function_bind : name?
             _open_function : "@" function_bind  "{"
 
             _seperator : ","

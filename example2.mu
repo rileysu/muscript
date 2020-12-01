@@ -1,13 +1,34 @@
 std = import 'std';
+i = import 'integer';
 
-f = @x {
-  std.print x;
+add = @x {
+  out = std.if (std.is_equal 10 x) @{
+    return 'Worked!';
+  } @{
+    std.print x;
+    return (add (i.add x 1));
+  };
+
+  return out;
 };
 
 identity = @x {
-  out = x;
-}
+  std.print 'Should run!';
+  return x;
+  std.print 'Not supposed to run';
+};
 
-std.print 'Hello World!';
+closure = @{
+  val = 1;
 
-std.print (identity 'Hello World 2');
+  return @{
+    val = i.add val 1;
+    std.print val;
+  };
+};
+
+inc = closure ();
+
+inc ();
+inc ();
+inc ();
