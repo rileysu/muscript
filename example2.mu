@@ -13,9 +13,7 @@ add = @x {
 };
 
 identity = @x {
-  std.print 'Should run!';
   return x;
-  std.print 'Not supposed to run';
 };
 
 closure = @{
@@ -27,8 +25,4 @@ closure = @{
   };
 };
 
-inc = closure ();
-
-inc ();
-inc ();
-inc ();
+std.print (identity 'Hello World!');

@@ -1,57 +1,62 @@
-from concrete import Concrete, ConcreteInteger, ConcreteDecimal, ConcreteString, ConcreteList, ConcreteSet, ConcreteObject, ConcreteEmpty, ConcreteFunction
+import concrete
 
 class Value():
     def __init__(self, value):
         self.value = value
 
     def evaluate(self, scope):
-        return Concrete(self.value)
+        return concrete.Concrete(self.value)
 
 class Integer(Value):
     def evaluate(self, scope):
-        return ConcreteInteger(self.value)
+        return concrete.ConcreteInteger(self.value)
 
 class Decimal(Value):
     def evaluate(self, scope):
-        return ConcreteDecimal(self.value)
+        return concrete.ConcreteDecimal(self.value)
 
 class String(Value):
     def evaluate(self, scope):
-        return ConcreteString(self.value)
+        return concrete.ConcreteString(self.value)
 
 class List(Value):
     def evaluate(self, scope):
-        return ConcreteList(list(map(lambda x: x.evaluate(scope), self.value)))
+        return concrete.ConcreteList(list(map(lambda x: x.evaluate(scope), self.value)))
 
 class Set(Value):
     def evaluate(self, scope):
-        return ConcreteSet(set(map(lambda x: x.evaluate(scope), self.value)))
+        return concrete.ConcreteSet(set(map(lambda x: x.evaluate(scope), self.value)))
+
+class ObjectMatter(Value):
+    def __init__(self, value, type=None):
+        self.value = value
+        self.type = type
+
+    def evaluate(self, scope):
+        return concrete.ConcreteMatter(self.value.evaluate(), self.type.evaluate())
 
 class Object(Value):
     def __init__(self, values):
         self.values = {}
         for definition in values:
             #What if object is referenced in object to assign to?
-            self.values[definition['identifier']['values'][0]] = {
-                'value': definition['value'], 
-                'type': definition['type']
-            }
+            self.values[definition['identifier']['values'][0]] = ObjectMatter(definition['value'], definition['type'])
     
     def evaluate(self, scope):
         out = {}
 
         for key in self.values:
             #Ignore type check until implemented
-            out[key] = self.values[key]
+            out[key] = self.values[key].evaluate()
 
-        return ConcreteObject(out)
+        return concrete.ConcreteObject(out)
 
 class Empty(Value):
     def __init__(self, value=None):
         super().__init__(value)
 
     def evaluate(self, scope):
-        return ConcreteEmpty(self.value)
+        return concrete.ConcreteEmpty(self.value)
 
 class Variable(Value):
     def evaluate(self, scope):
@@ -60,7 +65,7 @@ class Variable(Value):
             out = scope.get_key(self.value[0])
 
             for name in self.value[1:]:
-                #Quick hack since objects use Matter
+                #Quick hack since objects use ConcreteMatter
                 out = out.value[name].value
 
             return out
@@ -97,7 +102,7 @@ class Function(Value):
         self.argument = None
 
     def evaluate(self, scope):
-            return ConcreteFunction(scope, self.bind, self.statements)
+            return concrete.ConcreteFunction(scope, self.bind, self.statements)
 
 class Statement():
     def __init__(self):

@@ -1,4 +1,4 @@
-class Matter():
+class ScopeMatter():
     def __init__(self, value, type):
         self.value = value
         self.type = type
@@ -14,7 +14,7 @@ class Scope():
         return self.map[key].type
 
     def set_key(self, key, value, type=None):
-        self.map[key] = Matter(value, type)
+        self.map[key] = ScopeMatter(value, type)
 
     def modify_key(self, key, value, type=None):
         self.map[key].value = value

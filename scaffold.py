@@ -37,8 +37,6 @@ with open('example2.mu') as f:
     scope = Scope(init_scope)
     env = ExecutionEnvironment(scope)
 
-    print(tree.pretty())
-
     env.execute(statements)
 
     #for matter in scope.map:
