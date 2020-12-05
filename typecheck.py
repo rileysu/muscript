@@ -1,6 +1,9 @@
 import concrete
 import math
 
+#TODO
+#Add types for Empty and Ellipsis
+
 def is_type(type, value):
     if type.value == 'Integer':
         return isinstance(value, concrete.ConcreteInteger)
@@ -37,6 +40,4 @@ def is_type(type, value):
         else:
             return False
     else:
-        print(type)
-        print(value)
         return (type == value)
