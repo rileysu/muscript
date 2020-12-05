@@ -1,30 +1,51 @@
+import typecheck
+
 class ScopeMatter():
-    def __init__(self, value, type):
-        self.value = value
-        self.type = type
+    def __init__(self, values, types):
+        self.values = values
+        self.types = types
 
 class Scope():
-    def __init__(self, init):
-        self.map = init
+    def __init__(self, values, types):
+        self.values = values
+        self.types = types
 
     def get_key(self, key):
-        return self.map[key].value
+        return self.values[key]
 
     def get_key_type(self, key):
-        return self.map[key].type
+        return self.types[key]
 
     def set_key(self, key, value, type=None):
-        self.map[key] = ScopeMatter(value, type)
+        type = self.get_key_type(key) if self.has_key_type(key) else type
+        
+        if type:
+            if not typecheck.is_type(type, value):
+                raise Exception('Type exception: ' + str(value) + ' -> ' + str(type))
+
+        self.values[key] = value
+        if type:
+            self.types[key] = type
 
     def modify_key(self, key, value, type=None):
-        self.map[key].value = value
-        self.map[key].type = type
+        type = self.get_key_type(key) if self.has_key_type(key) else type
+
+        if type:
+            if not typecheck.is_type(type, value):
+                raise Exception('Type exception: ' + str(value) + ' -> ' + str(type))
+        
+        self.values[key] = value
+        if type:
+            self.types[key] = type
 
     def has_key(self, key):
-        return key in self.map
+        return key in self.values
+
+    def has_key_type(self, key):
+        return key in self.types
 
     def copy(self):
-        return Scope(self.map.copy())
+        return Scope(self.values.copy(), self.types.copy())
 
 class ExecutionEnvironment():
     def __init__(self, scope):

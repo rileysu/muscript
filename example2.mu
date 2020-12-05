@@ -25,4 +25,6 @@ closure = @{
   };
 };
 
+a: [1, 2, 4] = [1, 2, 4];
+
 std.print (identity 'Hello World!');

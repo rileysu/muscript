@@ -1,5 +1,5 @@
 from lark import Lark, Transformer
-from state import Integer, Decimal, String, List, Set, Object, Empty, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
+from state import Integer, Decimal, String, List, Set, Object, Empty, Ellipsis, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
 
 # -=Molecules=-
 # Statement - an action that may mutate state and doesn't return a value
@@ -63,6 +63,9 @@ class TreeTransformer(Transformer):
 
     def empty_value(self, values):
         return Empty()
+
+    def ellipsis_value(self, values):
+        return Ellipsis()
 
     def variable(self, values):
         return Variable(values)
@@ -134,7 +137,9 @@ class Parser:
             
             function_type : _base_expression (_function_arrow _base_expression)+
             empty_value : _open_paren _close_paren
+            ellipsis_value : "..."
             _base_expression : (empty_value
+                | ellipsis_value
                 | variable
                 | constant
                 | function

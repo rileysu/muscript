@@ -27,36 +27,41 @@ class Set(Value):
     def evaluate(self, scope):
         return concrete.ConcreteSet(set(map(lambda x: x.evaluate(scope), self.value)))
 
-class ObjectMatter(Value):
-    def __init__(self, value, type=None):
-        self.value = value
-        self.type = type
-
-    def evaluate(self, scope):
-        return concrete.ConcreteMatter(self.value.evaluate(), self.type.evaluate())
-
 class Object(Value):
     def __init__(self, values):
         self.values = {}
+        self.types = {}
         for definition in values:
             #What if object is referenced in object to assign to?
-            self.values[definition['identifier']['values'][0]] = ObjectMatter(definition['value'], definition['type'])
+            self.values[definition['identifier']['values'][0]] = definition['value']
+            self.types[definition['identifier']['values'][0]] = definition['type']
     
     def evaluate(self, scope):
-        out = {}
+        values = {}
+        types = {}
 
         for key in self.values:
             #Ignore type check until implemented
-            out[key] = self.values[key].evaluate()
+            values[key] = self.values[key].evaluate()
+            if key in types:
+                types[key] = self.types[key].evaluate()
 
-        return concrete.ConcreteObject(out)
+        return concrete.ConcreteObject(values, types)
 
 class Empty(Value):
-    def __init__(self, value=None):
-        super().__init__(value)
+    def __init__(self):
+        super().__init__(None)
 
     def evaluate(self, scope):
-        return concrete.ConcreteEmpty(self.value)
+        return concrete.ConcreteEmpty()
+
+class Ellipsis(Value):
+    def __init__(self):
+        super().__init__(None)
+
+    def evaluate(self, scope):
+        return concrete.ConcreteEllipsis()
+
 
 class Variable(Value):
     def evaluate(self, scope):
@@ -65,8 +70,7 @@ class Variable(Value):
             out = scope.get_key(self.value[0])
 
             for name in self.value[1:]:
-                #Quick hack since objects use ConcreteMatter
-                out = out.value[name].value
+                out = out.get(name)
 
             return out
         else:
@@ -118,7 +122,6 @@ class MatterStatement(Statement):
         self.type = type
 
     def execute(self, scope):
-        #Fix for assigning to objects
         if self.type:
             scope.set_key(self.identifier[0], self.value.evaluate(scope), self.type.evaluate(scope))
         else:

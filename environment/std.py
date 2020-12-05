@@ -1,4 +1,4 @@
-from execution import Scope, ScopeMatter
+from execution import Scope
 from concrete import ConcreteInteger, ConcreteString, ConcreteList, ConcreteSet, ConcreteEmpty, ConcreteExternalFunction
 
 def mu_print(scope, value):
@@ -44,8 +44,8 @@ def mu_for_each(scope, values):
 
 
 table = {
-    'print': ScopeMatter(ConcreteExternalFunction(Scope({}), mu_print), None),
-    'is_equal': ScopeMatter(ConcreteExternalFunction(Scope({}), mu_is_equal), None),
-    'if': ScopeMatter(ConcreteExternalFunction(Scope({}), mu_if), None),
-    'for_each': ScopeMatter(ConcreteExternalFunction(Scope({}), mu_for_each), None)
+    'print': ConcreteExternalFunction(Scope({}, {}), mu_print),
+    'is_equal': ConcreteExternalFunction(Scope({}, {}), mu_is_equal),
+    'if': ConcreteExternalFunction(Scope({}, {}), mu_if),
+    'for_each': ConcreteExternalFunction(Scope({}, {}), mu_for_each)
 }

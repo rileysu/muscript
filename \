@@ -29,25 +29,25 @@ class ConcreteString(Concrete):
 
 class ConcreteList(Concrete):
     def __len__(self):
+        if ConcreteEllipsis() in self.value:
+            return float('inf')
+        else:
+            return len(self.value)
+
+    def true_length(self):
         return len(self.value)
 
     def __getitem__(self, arg):
-        seq_len = self.inf_seq_length() if self.is_infinite() else len(self.value)
+        first_pos = next(i for x, i in enumerate(self.value) if lambda y: y == ConcreteEllipsis())
 
-        if seq_len == 0:
+        if first_pos == 0:
             return ConcreteEmpty()
         else:
-            return self.value[arg % seq_len]
-
-    def is_infinite(self):
-        return ConcreteEllipsis() in self.value
-
-    def inf_seq_length(self):
-        return next(i for i, x in enumerate(self.value) if x == ConcreteEllipsis())
-
+            return self.value[arg % first_pos]
+        
     def coalesce(self, scope, value):
         if isinstance(value, ConcreteList):
-            if not (self.is_infinite() or value.is_infinite()):
+            if len(self) != float('inf') and len(value) != float('inf'):
                 return ConcreteList(self.value + value.value)
             else:
                 raise Exception('Could not coalesce lists where at least one is infinite')
@@ -67,17 +67,11 @@ class ConcreteSet(Concrete):
     def __iter__(self):
         return iter(self.value)
 
-# Dict values and types to concrete objects
+# Dict of strings to ConcreteMatter
 class ConcreteObject(Concrete):
     def __init__(self, values, types):
         self.values = values
         self.types = types
-
-    def get(self, key):
-        return self.values[key]
-
-    def get_type(self, key):
-        return self.types[key]
 
 # Exists to easily define and check empty value
 # Concrete is already defined as empty
@@ -91,9 +85,6 @@ class ConcreteEllipsis(Concrete):
         super().__init__(None)
 
 class ConcreteType(Concrete):
-    def __repr__(self):
-        return '<Type: ' + str(self.value) + '>'
-
     def coalesce(self, scope, value):
         if self.value == 'Integer':
             if isinstance(value, ConcreteInteger):
