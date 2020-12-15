@@ -1,11 +1,20 @@
 std = import 'std';
 list = import 'list';
 
-a = [1, 2, 3];
-b = [1, 2, 3, ...];
+a: [Integer, Integer, Integer] = [1, 2, 3];
+a = [4, 5, 6];
 
-std.print (list.get a 1);
-std.print (list.set a 3 1);
+b: [Integer, ...] = [1, 2, 3];
+b = [1, 2, 3, 4, 5];
+b = [...];
 
-std.print (list.get b 10);
-std.print (list.set b 3 4);
+c: [Integer, Decimal, ...] = [1, 1.1, 2, 2.2];
+c = [1];
+c = [...];
+
+d: 1 = 1;
+e: 2.2 = 2.3;
+
+std.print a;
+std.print b;
+std.print c;

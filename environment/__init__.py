@@ -1,8 +1,8 @@
 from execution import Scope, ScopeMatter
 import concrete
 
-import environment.std as std
-import environment.list_std as list_std
+import environment.std_lib as std_lib
+import environment.list_lib as list_lib
 
 def mu_integer_add(scope, first_value):
     def load_second_value(scope, second_value):
@@ -15,12 +15,13 @@ integer = {
 }
 
 def mu_import(scope, value):
-        if value == 'std':
-            return concrete.ConcreteObject(std.std_values, std.std_types)
-        elif value == 'integer':
+    if isinstance(value, concrete.ConcreteString):
+        if value.value == 'std':
+            return concrete.ConcreteObject(std_lib.values, std_lib.types)
+        elif value.value == 'integer':
             return concrete.ConcreteObject(integer, {})
-        elif value == 'list':
-            return concrete.ConcreteObject(list_std.list_values, list_std.list_types)
+        elif value.value == 'list':
+            return concrete.ConcreteObject(list_lib.values, list_lib.types)
         else:
             return concrete.ConcreteEmpty()
 
@@ -33,7 +34,10 @@ init_scope_values = {
         'Set': concrete.ConcreteType('Set'),
         'Object': concrete.ConcreteType('Object'),
         'Function': concrete.ConcreteType('Function'),
-        'ExternalFunction': concrete.ConcreteType('ExternalFunction')
+        'ExternalFunction': concrete.ConcreteType('ExternalFunction'),
+        'Any': concrete.ConcreteType('Any')
 }
 
-init_scope_types = {}
+init_scope_types = {
+    'import': concrete.ConcreteType('ExternalFunction')
+}

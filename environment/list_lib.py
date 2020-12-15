@@ -19,12 +19,12 @@ def mu_list_set(scope, list_value):
 
     return concrete.ConcreteExternalFunction(execution.Scope({}, {}), load_value)
 
-list_values = {
+values = {
     'get': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_list_get),
     'set': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_list_set)
 }
 
-list_types = {
+types = {
     'get': concrete.ConcreteType('ExternalFunction'),
     'set': concrete.ConcreteType('ExternalFunction')
 }

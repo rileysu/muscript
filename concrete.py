@@ -7,7 +7,7 @@ class Concrete():
         self.value = value
 
     def __eq__(self, value):
-        return self.value == value
+        return isinstance(value, type(self)) and self.value == value.value
 
     def coalesce(self, value):
         # Fallback to return final value
@@ -41,6 +41,9 @@ class ConcreteString(Concrete):
 class ConcreteList(Concrete):
     def __len__(self):
         return len(self.value)
+
+    def __repr__(self):
+        return self.value.__repr__()
 
     def __getitem__(self, index):
         seq_len = self.inf_seq_length() if self.is_infinite() else len(self.value)
@@ -80,20 +83,26 @@ class ConcreteList(Concrete):
         return iter(self.value)
 
 class ConcreteSet(Concrete):
+    def __repr__(self):
+        return self.value.__repr__()
+
+    def __iter__(self):
+        return iter(self.value)
+    
     def coalesce(self, scope, value):
         if isinstance(value, ConcreteSet):
             return ConcreteSet(self.value + value.value)
         else:
             return value
 
-    def __iter__(self):
-        return iter(self.value)
-
 # Dict values and types to concrete objects
 class ConcreteObject(Concrete):
     def __init__(self, values, types):
         self.values = values
         self.types = types
+
+    def __eq__(self, value):
+        return isinstance(value, type(self)) and self.values == value.values and self.types == value.types
 
     def __repr__(self):
         return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
@@ -163,6 +172,9 @@ class ConcreteFunction(Concrete):
         self.bind = bind
         self.statements = statements
 
+    def __eq__(self, value):
+        return isinstance(value, type(self)) and self.statements == value.statements
+
     def __repr__(self):
         return '<Function>'
 
@@ -188,6 +200,9 @@ class ConcreteExternalFunction(Concrete):
     def __init__(self, scope, value):
         self.scope = scope
         super().__init__(value)
+
+    def __eq__(self, value):
+        return isinstance(value, type(self)) and self.value == value.value
 
     def __repr__(self):
         return '<ExternalFunction>'
