@@ -95,6 +95,9 @@ class ConcreteObject(Concrete):
         self.values = values
         self.types = types
 
+    def __repr__(self):
+        return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
+
     def get(self, key):
         return self.values[key]
 
@@ -107,10 +110,16 @@ class ConcreteEmpty(Concrete):
     def __init__(self):
         super().__init__(None)
 
+    def __repr__(self):
+        return '<Empty>'
+
 
 class ConcreteEllipsis(Concrete):
     def __init__(self):
         super().__init__(None)
+
+    def __repr__(self):
+        return '<Ellipsis>'
 
 class ConcreteType(Concrete):
     def __repr__(self):
@@ -154,11 +163,8 @@ class ConcreteFunction(Concrete):
         self.bind = bind
         self.statements = statements
 
-    def empty(self):
-        return ConcreteFunction(self.scope.copy(), None, [])
-
-    def define(self, value):
-        return (self == self.empty() and isinstance(value, ConcreteFunction)) or self == value
+    def __repr__(self):
+        return '<Function>'
 
     def coalesce(self, scope, value=ConcreteEmpty()):
         new_scope = self.scope.copy()
@@ -183,11 +189,8 @@ class ConcreteExternalFunction(Concrete):
         self.scope = scope
         super().__init__(value)
 
-    def empty(self):
-        def empty_func(scope, value):
-            return value
-
-        return ConcreteExternalFunction(self.scope.copy(), empty_func)
+    def __repr__(self):
+        return '<ExternalFunction>'
 
     def coalesce(self, scope, value=ConcreteEmpty()):
         new_scope = self.scope.copy()
