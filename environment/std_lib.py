@@ -2,10 +2,8 @@ from execution import Scope
 from concrete import ConcreteInteger, ConcreteString, ConcreteList, ConcreteSet, ConcreteEmpty, ConcreteExternalFunction
 
 def mu_print(scope, value):
-    # Expecting all concrete types to have a value
-    # This is a false assumption but works in most cases
-    # A better solution is to allow concrete types to be represented as strings
-    print(value.value)
+    #Use the internal repr to display value
+    print(str(value))
 
     return ConcreteEmpty()
 

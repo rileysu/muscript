@@ -9,7 +9,7 @@ class Concrete():
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.value == value.value
 
-    def coalesce(self, value):
+    def coalesce(self, scope, value):
         # Fallback to return final value
         # Safe option when provided with no other
         return value
@@ -106,6 +106,10 @@ class ConcreteObject(Concrete):
 
     def __repr__(self):
         return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
+
+    def coalesce(self, scope, value):
+        if isinstance(value, ConcreteObject):
+            return ConcreteObject(self.values.copy() | value.values.copy(), self.types.copy() | value.types.copy())
 
     def get(self, key):
         return self.values[key]

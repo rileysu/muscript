@@ -42,9 +42,9 @@ class Object(Value):
 
         for key in self.values:
             #Ignore type check until implemented
-            values[key] = self.values[key].evaluate()
+            values[key] = self.values[key].evaluate(scope)
             if key in types:
-                types[key] = self.types[key].evaluate()
+                types[key] = self.types[key].evaluate(scope)
 
         return concrete.ConcreteObject(values, types)
 

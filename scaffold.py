@@ -4,7 +4,7 @@ from environment import init_scope_values, init_scope_types
 
 parser = Parser()
 
-with open('examples/example3.mu') as f:
+with open('examples/example4.mu') as f:
     text = f.read()
 
     tree = parser.parse(text)
