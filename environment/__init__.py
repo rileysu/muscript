@@ -1,9 +1,10 @@
 from execution import Scope, ScopeMatter
 import concrete
-import environment.std
+
+import environment.std as std
+import environment.list_std as list_std
 
 def mu_integer_add(scope, first_value):
-    
     def load_second_value(scope, second_value):
         return concrete.ConcreteInteger(first_value.value + second_value.value)
 
@@ -15,9 +16,11 @@ integer = {
 
 def mu_import(scope, value):
         if value == 'std':
-            return concrete.ConcreteObject(environment.std.table, {})
+            return concrete.ConcreteObject(std.std_values, std.std_types)
         elif value == 'integer':
             return concrete.ConcreteObject(integer, {})
+        elif value == 'list':
+            return concrete.ConcreteObject(list_std.list_values, list_std.list_types)
         else:
             return concrete.ConcreteEmpty()
 

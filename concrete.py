@@ -15,10 +15,18 @@ class Concrete():
         return value
 
 class ConcreteInteger(Concrete):
-    pass
+    def __int__(self):
+        return self.value
+
+    def __repr__(self):
+        return self.value.__repr__()
 
 class ConcreteDecimal(Concrete):
-   pass
+    def __float__(self):
+        return self.value
+
+    def __repr__(self):
+        return self.value.__repr__()
 
 class ConcreteString(Concrete):
     def coalesce(self, scope, value):
@@ -27,18 +35,32 @@ class ConcreteString(Concrete):
         else:
             return value
 
+    def __repr__(self):
+        return self.value.__repr__()
+
 class ConcreteList(Concrete):
     def __len__(self):
         return len(self.value)
 
-    def __getitem__(self, arg):
+    def __getitem__(self, index):
         seq_len = self.inf_seq_length() if self.is_infinite() else len(self.value)
 
         if seq_len == 0:
             return ConcreteEmpty()
         else:
-            return self.value[arg % seq_len]
+            return self.value[int(index) % seq_len]
 
+    def __setitem__(self, index, value):
+        seq_len = self.inf_seq_length() if self.is_infinite() else len(self.value)
+
+        if seq_len == 0:
+            raise Exception('Could not set index in infinite empty list')
+        else:
+            self.value[int(index) % seq_len] = value
+
+    def copy(self):
+        return ConcreteList(self.value.copy())
+    
     def is_infinite(self):
         return ConcreteEllipsis() in self.value
 

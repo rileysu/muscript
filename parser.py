@@ -1,28 +1,6 @@
 from lark import Lark, Transformer
 from state import Integer, Decimal, String, List, Set, Object, Empty, Ellipsis, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
 
-# -=Molecules=-
-# Statement - an action that may mutate state and doesn't return a value
-# Statement -> Identifier [Type Expression] Assign Expression | Function Expression+
-# Expression - an action that may mutate state that does return a value
-# Expression -> (Identifier | Constant | Expression Arrow Expression | Function Expression+) [Expression]
-## Matter - An assignable piece of state (open to new mutable data in the future)
-## Matter -> Identifier
-# Function - A list of statements
-# Function -> Statement+
-#
-# -=Atoms=-
-# Type - Defines type of matter
-# Assign - Defines assigning to matter
-# Identifier - An string representing matter
-# Arrow - Defines a function type
-# Constant - Defines a well defined single value
-# 
-# -=Conventions=-
-# Conventions for tree transform function:
-#   curr_node is always the deepest node needed to be satisfied
-#   token is the recognised token object with associated value
-
 class TreeTransformer(Transformer):
     def integer(self, values):
         return Integer(int(values[0]))

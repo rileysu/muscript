@@ -43,9 +43,11 @@ def mu_for_each(scope, values):
 
 
 
-table = {
+std_values = {
     'print': ConcreteExternalFunction(Scope({}, {}), mu_print),
     'is_equal': ConcreteExternalFunction(Scope({}, {}), mu_is_equal),
     'if': ConcreteExternalFunction(Scope({}, {}), mu_if),
     'for_each': ConcreteExternalFunction(Scope({}, {}), mu_for_each)
 }
+
+std_types = {}
