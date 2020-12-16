@@ -31,20 +31,27 @@ class Object(Value):
     def __init__(self, values):
         self.values = {}
         self.types = {}
+
         for definition in values:
             #What if object is referenced in object to assign to?
-            self.values[definition['identifier']['values'][0]] = definition['value']
-            self.types[definition['identifier']['values'][0]] = definition['type']
+            self.values[definition['identifier']['value']] = definition['value']
+            self.types[definition['identifier']['value']] = definition['type']
     
     def evaluate(self, scope):
         values = {}
         types = {}
-
+        
         for key in self.values:
-            #Ignore type check until implemented
-            values[key] = self.values[key].evaluate(scope)
-            if key in types:
+            # Ignore type check until implemented
+            if self.values[key]:
+                values[key] = self.values[key].evaluate(scope)
+            else:
+                values[key] = concrete.ConcreteEmpty()
+            if self.types[key]:
                 types[key] = self.types[key].evaluate(scope)
+            # Otherwise set key to the any type
+            else:
+                types[key] = concrete.ConcreteType('Any')
 
         return concrete.ConcreteObject(values, types)
 
@@ -122,10 +129,16 @@ class MatterStatement(Statement):
         self.type = type
 
     def execute(self, scope):
-        if self.type:
-            scope.set_key(self.identifier[0], self.value.evaluate(scope), self.type.evaluate(scope))
+        if self.value:
+            if self.type:
+                scope.set_key(self.identifier, self.value.evaluate(scope), self.type.evaluate(scope))
+            else:
+                scope.set_key(self.identifier, self.value.evaluate(scope), concrete.ConcreteType('Any'))
         else:
-            scope.set_key(self.identifier[0], self.value.evaluate(scope))
+            if self.type: 
+                scope.set_key(self.identifier, concrete.ConcreteEmpty(), self.type.evaluate(scope))
+            else:
+                raise Exception('No value or type specified in statement!')
 
 class ExpressionStatement(Statement):
     def __init__(self, expression):

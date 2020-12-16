@@ -5,7 +5,9 @@ import math
 #Add types for Empty and Ellipsis
 
 def is_type(type, value):
-    if isinstance(type, concrete.ConcreteType):
+    if isinstance(value, concrete.ConcreteEmpty):
+        return True
+    elif isinstance(type, concrete.ConcreteType):
         if type.value == 'Integer':
             return isinstance(value, concrete.ConcreteInteger)
         elif type.value == 'Decimal':
@@ -50,6 +52,13 @@ def is_type(type, value):
             return all(any(is_type(y, x) for y in type.value) for x in value.value)
         else:
             return False
+    elif isinstance(type, concrete.ConcreteObject):
+        if isinstance(value, concrete.ConcreteObject):
+            # Each attribute's type in the type object corresponds with the attributes value in the value object
+            return all((attribute in value.values and is_type(type.types[attribute], value.values[attribute])) for attribute in type.types)
+        else:
+            return False
+
     else:
         #Case will most likely not work
         return (type == value)

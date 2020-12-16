@@ -97,6 +97,7 @@ class ConcreteSet(Concrete):
 
 # Dict values and types to concrete objects
 class ConcreteObject(Concrete):
+    # All values should have a corresponding type when the object is created
     def __init__(self, values, types):
         self.values = values
         self.types = types

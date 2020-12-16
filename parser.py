@@ -54,7 +54,7 @@ class TreeTransformer(Transformer):
     def identifier(self, values):
         return {
                 'name': 'identifier',
-                'values': values
+                'value': values[0]
         }
 
     def function_type(self, values):
@@ -88,7 +88,7 @@ class TreeTransformer(Transformer):
         
         for value in values:
             if value['name'] == 'identifier':
-                identifier = value['values']
+                identifier = value['value']
             elif value['name'] == 'type_definition':
                 type = value['expression']
             elif value['name'] == 'assign_definition':
@@ -109,7 +109,7 @@ class Parser:
 
             type_definition : _type expression
             assign_definition : _assign expression
-            matter_statement: identifier type_definition? assign_definition
+            matter_statement: (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition)
             expression_statement: expression
             ?statement : (matter_statement | expression_statement) _end_statement
             
@@ -133,12 +133,12 @@ class Parser:
             
             set : _open_set [expression (_seperator expression)*] _close_set
            
-            object_definition : identifier type_definition? assign_definition
+            object_definition : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition)
             object : _open_object [object_definition (_seperator object_definition)*] _close_object
 
             ?constant : integer | decimal | string
 
-            identifier : name (_access name)*
+            identifier : name
             variable: name (_access name)*
            
             function_bind : name?

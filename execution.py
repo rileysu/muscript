@@ -16,7 +16,7 @@ class Scope():
     def get_key_type(self, key):
         return self.types[key]
 
-    def set_key(self, key, value, type=None):
+    def set_key(self, key, value, type):
         type = self.get_key_type(key) if self.has_key_type(key) else type
         
         if type:
