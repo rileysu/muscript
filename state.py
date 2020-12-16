@@ -40,18 +40,20 @@ class Object(Value):
     def evaluate(self, scope):
         values = {}
         types = {}
-        
+       
+        # Structure types and values for concrete types
+        # Give values and types undefined if not defined and otherwise give the value specified
         for key in self.values:
             # Ignore type check until implemented
             if self.values[key]:
                 values[key] = self.values[key].evaluate(scope)
             else:
-                values[key] = concrete.ConcreteEmpty()
+                values[key] = concrete.ConcreteUndefined()
             if self.types[key]:
                 types[key] = self.types[key].evaluate(scope)
             # Otherwise set key to the any type
             else:
-                types[key] = concrete.ConcreteType('Any')
+                types[key] = concrete.ConcreteUndefined()
 
         return concrete.ConcreteObject(values, types)
 
@@ -133,10 +135,10 @@ class MatterStatement(Statement):
             if self.type:
                 scope.set_key(self.identifier, self.value.evaluate(scope), self.type.evaluate(scope))
             else:
-                scope.set_key(self.identifier, self.value.evaluate(scope), concrete.ConcreteType('Any'))
+                scope.set_key(self.identifier, self.value.evaluate(scope), concrete.ConcreteUndefined())
         else:
             if self.type: 
-                scope.set_key(self.identifier, concrete.ConcreteEmpty(), self.type.evaluate(scope))
+                scope.set_key(self.identifier, concrete.ConcreteUndefined(), self.type.evaluate(scope))
             else:
                 raise Exception('No value or type specified in statement!')
 

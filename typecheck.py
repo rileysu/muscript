@@ -5,7 +5,7 @@ import math
 #Add types for Empty and Ellipsis
 
 def is_type(type, value):
-    if isinstance(value, concrete.ConcreteEmpty):
+    if isinstance(type, concrete.ConcreteUndefined) or isinstance(value, concrete.ConcreteUndefined):
         return True
     elif isinstance(type, concrete.ConcreteType):
         if type.value == 'Integer':

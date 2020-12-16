@@ -2,9 +2,11 @@ std = import 'std';
 
 Type = { a: Integer, b: Decimal };
 
-o: Type; 
-o = { a = 1, b = 2.2 };
-o = o { a = 2 };
-o = o { a = 2.2 };
+o: Type = Type { a = 1, b = 2.2 };
 
+
+std.print Type;
+std.print { a = 1, b = 2.2 };
 std.print o;
+
+std.print (Integer '123');

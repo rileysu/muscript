@@ -12,7 +12,10 @@ class Concrete():
     def coalesce(self, scope, value):
         # Fallback to return final value
         # Safe option when provided with no other
-        return value
+        if isinstance(value, ConcreteUndefined):
+            return self
+        else:
+            return value
 
 class ConcreteInteger(Concrete):
     def __int__(self):
@@ -110,7 +113,22 @@ class ConcreteObject(Concrete):
 
     def coalesce(self, scope, value):
         if isinstance(value, ConcreteObject):
-            return ConcreteObject(self.values.copy() | value.values.copy(), self.types.copy() | value.types.copy())
+            values = self.values.copy()
+            types = self.types.copy()
+            
+            for attribute in value.values:
+                if attribute in values:
+                    values[attribute] = values[attribute].coalesce(scope, value.values[attribute])
+                else:
+                    values[attribute] = value.values[attribute]
+
+            for attribute in value.types:
+                if attribute in types:
+                    types[attribute] = types[attribute].coalesce(scope, value.types[attribute])
+                else:
+                    types[attribute] = value.types[attribute]
+                
+            return ConcreteObject(values, types)
 
     def get(self, key):
         return self.values[key]
@@ -135,12 +153,21 @@ class ConcreteEllipsis(Concrete):
     def __repr__(self):
         return '<Ellipsis>'
 
+class ConcreteUndefined(Concrete):
+    def __init__(self):
+        super().__init__(None)
+
+    def __repr__(self):
+        return '<Undefined>'
+
 class ConcreteType(Concrete):
     def __repr__(self):
         return '<Type: ' + str(self.value) + '>'
 
     def coalesce(self, scope, value):
-        if self.value == 'Integer':
+        if super().coalesce(scope, value) != value:
+            return super().coalesce(scope, value)
+        elif self.value == 'Integer':
             if isinstance(value, ConcreteInteger):
                 return ConcreteInteger(value.value)
             elif isinstance(value, ConcreteDecimal):
