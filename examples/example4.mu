@@ -1,12 +1,37 @@
 std = import 'std';
 
-Type = { a: Integer, b: Decimal };
+Type = {
+  print: Function,
+  string: String
+};
 
-o: Type = Type { a = 1, b = 2.2 };
+constructor = @str {
+  return (Type {
+    print = @{ std.print str; return str; },
+    string = 'Hello World!'
+  });
+};
 
 
-std.print Type;
-std.print { a = 1, b = 2.2 };
+o = constructor 'Test World!';
+std.print o;
+o.print ();
+
+modifier = {
+  print = @str { std.print str; return str; }
+};
+
+std.print 'Before';
+std.print o;
+std.print modifier;
+
+
+o = o modifier;
+
+
+std.print 'After';
 std.print o;
 
-std.print (Integer '123');
+
+std.print 'Out';
+o.print 'Second Test!';

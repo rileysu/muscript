@@ -33,7 +33,9 @@ class ConcreteDecimal(Concrete):
 
 class ConcreteString(Concrete):
     def coalesce(self, scope, value):
-        if isinstance(value, ConcreteString):
+        if isinstance(value, ConcreteUndefined):
+            return self
+        elif isinstance(value, ConcreteString):
             return ConcreteString(self.value + value.value)
         else:
             return value
@@ -74,9 +76,11 @@ class ConcreteList(Concrete):
         return next(i for i, x in enumerate(self.value) if x == ConcreteEllipsis())
 
     def coalesce(self, scope, value):
-        if isinstance(value, ConcreteList):
+        if isinstance(value, ConcreteUndefined):
+            return self
+        elif isinstance(value, ConcreteList):
             if not (self.is_infinite() or value.is_infinite()):
-                return ConcreteList(self.value + value.value)
+                return ConcreteList(self.value.copy() + value.value.copy())
             else:
                 raise Exception('Could not coalesce lists where at least one is infinite')
         else:
@@ -93,8 +97,10 @@ class ConcreteSet(Concrete):
         return iter(self.value)
     
     def coalesce(self, scope, value):
-        if isinstance(value, ConcreteSet):
-            return ConcreteSet(self.value + value.value)
+        if isinstance(value, ConcreteUndefined):
+            return self
+        elif isinstance(value, ConcreteSet):
+            return ConcreteSet(self.value.copy() + value.value.copy())
         else:
             return value
 
@@ -112,23 +118,23 @@ class ConcreteObject(Concrete):
         return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
 
     def coalesce(self, scope, value):
-        if isinstance(value, ConcreteObject):
+        if isinstance(value, ConcreteUndefined):
+            return self
+        elif isinstance(value, ConcreteObject):
             values = self.values.copy()
             types = self.types.copy()
-            
+
             for attribute in value.values:
-                if attribute in values:
-                    values[attribute] = values[attribute].coalesce(scope, value.values[attribute])
-                else:
+                if not isinstance(value.values[attribute], ConcreteUndefined):
                     values[attribute] = value.values[attribute]
 
             for attribute in value.types:
-                if attribute in types:
-                    types[attribute] = types[attribute].coalesce(scope, value.types[attribute])
-                else:
+                if not isinstance(value.types[attribute], ConcreteUndefined):
                     types[attribute] = value.types[attribute]
-                
+
             return ConcreteObject(values, types)
+        else:
+            return value
 
     def get(self, key):
         return self.values[key]
@@ -165,8 +171,8 @@ class ConcreteType(Concrete):
         return '<Type: ' + str(self.value) + '>'
 
     def coalesce(self, scope, value):
-        if super().coalesce(scope, value) != value:
-            return super().coalesce(scope, value)
+        if isinstance(value, ConcreteUndefined):
+            return self
         elif self.value == 'Integer':
             if isinstance(value, ConcreteInteger):
                 return ConcreteInteger(value.value)
@@ -208,12 +214,15 @@ class ConcreteFunction(Concrete):
         return isinstance(value, type(self)) and self.statements == value.statements
 
     def __repr__(self):
-        return '<Function>'
+        return '<Function: ' + str(id(self)) + '>'
 
     def coalesce(self, scope, value=ConcreteEmpty()):
+        if isinstance(value, ConcreteUndefined):
+            return self
+
         new_scope = self.scope.copy()
         if self.bind:
-            new_scope.set_key(self.bind, value)
+            new_scope.set_key(self.bind, value, ConcreteUndefined())
         env = ExecutionEnvironment(new_scope)
         
         return_value = ConcreteEmpty()
@@ -222,7 +231,8 @@ class ConcreteFunction(Concrete):
             env.halt()
             return_value = value
 
-        new_scope.set_key('return', ConcreteExternalFunction(new_scope, return_function))
+        #Ideally type should be itself so it is a constant
+        new_scope.set_key('return', ConcreteExternalFunction(new_scope, return_function), ConcreteType('ExternalFunction'))
 
         env.execute(self.statements)
         
@@ -240,5 +250,8 @@ class ConcreteExternalFunction(Concrete):
         return '<ExternalFunction>'
 
     def coalesce(self, scope, value=ConcreteEmpty()):
+        if isinstance(value, ConcreteUndefined):
+            return self
+
         new_scope = self.scope.copy()
         return self.value(new_scope, value)
