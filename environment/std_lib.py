@@ -1,5 +1,5 @@
 from execution import Scope
-from concrete import ConcreteInteger, ConcreteString, ConcreteList, ConcreteSet, ConcreteEmpty, ConcreteExternalFunction
+from concrete import ConcreteInteger, ConcreteString, ConcreteList, ConcreteSet, ConcreteEmpty, ConcreteType, ConcreteExternalFunction
 
 def mu_print(scope, value):
     #Use the internal repr to display value
@@ -19,9 +19,9 @@ def mu_if(scope, cond):
     def load_if_true(scope, true_function):
         def load_if_false(scope, false_function):
             if cond == 1:
-                return true_function.coalesce(scope)
+                return true_function.coalesce(scope, ConcreteEmpty())
             else:
-                return false_function.coalesce(scope)
+                return false_function.coalesce(scope, ConcreteEmpty())
 
         return ConcreteExternalFunction(scope, load_if_false)
     return ConcreteExternalFunction(scope, load_if_true)
@@ -48,4 +48,9 @@ values = {
     'for_each': ConcreteExternalFunction(Scope({}, {}), mu_for_each)
 }
 
-types = {}
+types = {
+    'print': ConcreteType('ConcreteExternalFunction'),
+    'is_equal': ConcreteType('ConcreteExternalFunction'),
+    'if': ConcreteType('ConcreteExternalFunction'),
+    'for_each': ConcreteType('ConcreteExternalFunction')
+}

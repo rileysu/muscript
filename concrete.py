@@ -9,6 +9,9 @@ class Concrete():
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.value == value.value
 
+    def __hash__(self):
+        return hash(self.value)
+
     def coalesce(self, scope, value):
         # Fallback to return final value
         # Safe option when provided with no other
@@ -114,6 +117,9 @@ class ConcreteObject(Concrete):
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.values == value.values and self.types == value.types
 
+    def __hash__(self):
+        return hash((self.values, self.types))
+
     def __repr__(self):
         return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
 
@@ -213,6 +219,9 @@ class ConcreteFunction(Concrete):
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.statements == value.statements
 
+    def __hash__(self):
+        return hash((self.scope, self.bind, self.statements))
+
     def __repr__(self):
         return '<Function: ' + str(id(self)) + '>'
 
@@ -231,11 +240,16 @@ class ConcreteFunction(Concrete):
             env.halt()
             return_value = value
 
-        #Ideally type should be itself so it is a constant
+        # Ideally type should be itself so it is a constant
         new_scope.set_key('return', ConcreteExternalFunction(new_scope, return_function), ConcreteType('ExternalFunction'))
 
         env.execute(self.statements)
-        
+       
+        # Mutate parent scope with changed values
+        for attribute in self.scope.values:
+            if attribute in new_scope.values:
+                self.scope.set_key(attribute, new_scope.get_key(attribute), new_scope.get_key_type(attribute))
+
         return return_value
 
 class ConcreteExternalFunction(Concrete):
@@ -245,6 +259,9 @@ class ConcreteExternalFunction(Concrete):
 
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.value == value.value
+
+    def __hash__(self):
+        return hash(self.scope, self.value)
 
     def __repr__(self):
         return '<ExternalFunction>'

@@ -148,7 +148,7 @@ class Parser:
             _type : ":"
             _assign : "="
             _access: "."
-            name : /[a-zA-Z_]\w*/
+            name : /[_\-a-zA-Z][_\-a-zA-Z0-9]*/
             _function_arrow : "->"
             integer : /\d+/
             decimal : /\d+\.\d*/

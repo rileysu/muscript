@@ -24,19 +24,7 @@ class Scope():
                 raise Exception('Type exception: ' + str(value) + ' -> ' + str(type))
 
         self.values[key] = value
-        if type:
-            self.types[key] = type
-
-    def modify_key(self, key, value, type=None):
-        type = self.get_key_type(key) if self.has_key_type(key) else type
-
-        if type:
-            if not typecheck.is_type(type, value):
-                raise Exception('Type exception: ' + str(value) + ' -> ' + str(type))
-        
-        self.values[key] = value
-        if type:
-            self.types[key] = type
+        self.types[key] = type
 
     def has_key(self, key):
         return key in self.values
