@@ -58,7 +58,8 @@ def is_type(type, value):
             return all((attribute in value.values and is_type(type.types[attribute], value.values[attribute])) for attribute in type.types)
         else:
             return False
-
+    elif isinstance(type, concrete.ConcreteAlgebraicType):
+        return any(is_type(x, value) for x in type.value)
     else:
         #Case will most likely not work
         return (type == value)

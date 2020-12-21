@@ -1,27 +1,29 @@
-import execution
+import context
 import concrete
 
-def mu_list_get(scope, list_value):
-    def load_index(scope, index):
+def mu_list_get(context, list_value):
+    def load_index(context, index):
         return list_value[index]
 
-    return concrete.ConcreteExternalFunction(scope, load_index)
+    return concrete.ConcreteExternalFunction(context, load_index)
 
-def mu_list_set(scope, list_value):
-    def load_value(scope, value):
-        def load_index(scope, index):
+def mu_list_set(context, list_value):
+    def load_value(context, value):
+        def load_index(context, index):
             list_copy = list_value.copy()
             list_copy[index] = value
 
             return list_copy
 
-        return concrete.ConcreteExternalFunction(scope, load_index)
+        return concrete.ConcreteExternalFunction(context, load_index)
 
-    return concrete.ConcreteExternalFunction(scope, load_value)
+    return concrete.ConcreteExternalFunction(context, load_value)
+
+ctx = context.Context(context.Scope({}, {}), is_halted=True)
 
 values = {
-    'get': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_list_get),
-    'set': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_list_set)
+    'get': concrete.ConcreteExternalFunction(ctx, mu_list_get),
+    'set': concrete.ConcreteExternalFunction(ctx, mu_list_set)
 }
 
 types = {

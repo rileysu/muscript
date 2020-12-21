@@ -1,5 +1,5 @@
 from lark import Lark, Transformer
-from state import Integer, Decimal, String, List, Set, Object, Empty, Ellipsis, Variable, Expression, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
+from state import Integer, Decimal, String, List, Set, Object, Empty, Ellipsis, Variable, Expression, AlgebraicType, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
 
 class TreeTransformer(Transformer):
     def integer(self, values):
@@ -57,6 +57,9 @@ class TreeTransformer(Transformer):
                 'value': values[0]
         }
 
+    def algebraic_type(self, values):
+        return AlgebraicType(values)
+
     def function_type(self, values):
         return FunctionType(values)
 
@@ -113,6 +116,7 @@ class Parser:
             expression_statement: expression
             ?statement : (matter_statement | expression_statement) _end_statement
             
+            algebraic_type : _base_expression (_algebraic_seperator _base_expression)+
             function_type : _base_expression (_function_arrow _base_expression)+
             empty_value : _open_paren _close_paren
             ellipsis_value : "..."
@@ -125,7 +129,7 @@ class Parser:
                 | set 
                 | object
                 | (_open_paren expression _close_paren))
-            expression : (function_type | _base_expression)+
+            expression : (algebraic_type | function_type | _base_expression)+
 
             function : _open_function statement+ _close_function
 
@@ -150,6 +154,7 @@ class Parser:
             _access: "."
             name : /[_\-a-zA-Z][_\-a-zA-Z0-9]*/
             _function_arrow : "->"
+            _algebraic_seperator : "|"
             integer : /\d+/
             decimal : /\d+\.\d*/
             string : /\'[^\']*\'/

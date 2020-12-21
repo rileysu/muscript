@@ -1,18 +1,18 @@
-from execution import Scope, ScopeMatter
 import concrete
+import context
 
 import environment.std_lib as std_lib
 import environment.control_lib as control_lib
 import environment.list_lib as list_lib
 
-def mu_integer_add(scope, first_value):
-    def load_second_value(scope, second_value):
+def mu_integer_add(context, first_value):
+    def load_second_value(context, second_value):
         return concrete.ConcreteInteger(first_value.value + second_value.value)
 
-    return concrete.ConcreteExternalFunction(scope, load_second_value)
+    return concrete.ConcreteExternalFunction(context, load_second_value)
 
 integer = {
-    'add': concrete.ConcreteExternalFunction(Scope({}, {}), mu_integer_add)
+    'add': concrete.ConcreteExternalFunction(context.Context(context.Scope({}, {}), is_halted=True), mu_integer_add)
 }
 
 def mu_import(scope, value):
@@ -29,7 +29,7 @@ def mu_import(scope, value):
             return concrete.ConcreteEmpty()
 
 init_scope_values = {
-    'import': concrete.ConcreteExternalFunction(Scope({}, {}), mu_import),
+    'import': concrete.ConcreteExternalFunction(context.Context(context.Scope({}, {}), is_halted=True), mu_import),
     'Integer': concrete.ConcreteType('Integer'),
     'Decimal': concrete.ConcreteType('Decimal'),
     'String': concrete.ConcreteType('String'),

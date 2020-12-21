@@ -1,7 +1,7 @@
 import concrete
 import environment.check as check
 import typecheck
-import execution
+import context
 
 def mu_if(scope, cond):
     check.check_arg(cond, concrete.ConcreteInteger)
@@ -74,12 +74,14 @@ def mu_match(scope, value):
 
     return concrete.ConcreteExternalFunction(scope, collect_maps)
 
+ctx = context.Context(context.Scope({}, {}), is_halted=True)
+
 values = {
-    'if': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_if),
-    'only': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_only),
-    'while': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_while),
-    'for_each': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_for_each),
-    'match': concrete.ConcreteExternalFunction(execution.Scope({}, {}), mu_match)
+    'if': concrete.ConcreteExternalFunction(ctx, mu_if),
+    'only': concrete.ConcreteExternalFunction(ctx, mu_only),
+    'while': concrete.ConcreteExternalFunction(ctx, mu_while),
+    'for_each': concrete.ConcreteExternalFunction(ctx, mu_for_each),
+    'match': concrete.ConcreteExternalFunction(ctx, mu_match)
 }
 
 types = {
