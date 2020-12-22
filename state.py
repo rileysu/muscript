@@ -104,16 +104,12 @@ class Expression(Value):
         return out
 
 class AlgebraicType(Value):
-    def __init__(self, values):
-        self.values = values
-
     def evaluate(self, context):
-        return concrete.ConcreteAlgebraicType(list(map(lambda x: x.evaluate(context), self.values)))
+        return concrete.ConcreteAlgebraicType(list(map(lambda x: x.evaluate(context), self.value)))
 
 class FunctionType(Value):
     def evaluate(self, context):
-        #TODO
-        return None
+        return concrete.ConcreteFunctionType(list(map(lambda x: x.evaluate(context), self.value)))
 
 class Function(Value):
     def __init__(self, bind, statements):
@@ -140,12 +136,12 @@ class MatterStatement(Statement):
     def execute(self, context):
         if self.value:
             if self.type:
-                context.get_scope().set_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context))
+                context.get_scope().set_value_type(self.identifier, self.type.evaluate(context).assimilate(context, self.value.evaluate(context)), self.type.evaluate(context))
             else:
                 context.get_scope().set_value_type(self.identifier, self.value.evaluate(context), concrete.ConcreteUndefined())
         else:
             if self.type: 
-                context.get_scope().set_value_type(self.identifier, concrete.ConcreteUndefined(), self.type.evaluate(context))
+                context.get_scope().set_value_type(self.identifier, self.type.evaluate(context).assimilate(context, concrete.ConcreteUndefined()), self.type.evaluate(context))
             else:
                 raise Exception('No value or type specified in statement!')
 

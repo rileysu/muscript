@@ -16,8 +16,7 @@ class Scope():
         type = self.get_type(key) if self.has_type(key) else type
         
         if type:
-            if not typecheck.is_type(type, value):
-                raise Exception('Type exception: ' + str(value) + ' -> ' + str(type))
+            typecheck.check_type(value, type)
 
         self.values[key] = value
         self.types[key] = type

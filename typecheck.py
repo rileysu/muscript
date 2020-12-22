@@ -4,7 +4,7 @@ import math
 #TODO
 #Add types for Empty and Ellipsis
 
-def is_type(type, value):
+def is_type(value, type):
     if isinstance(type, concrete.ConcreteUndefined) or isinstance(value, concrete.ConcreteUndefined):
         return True
     elif isinstance(type, concrete.ConcreteType):
@@ -60,6 +60,13 @@ def is_type(type, value):
             return False
     elif isinstance(type, concrete.ConcreteAlgebraicType):
         return any(is_type(x, value) for x in type.value)
+    elif isinstance(type, concrete.ConcreteFunctionType):
+        # Type check done dynamically on execution and return
+        return True
     else:
         #Case will most likely not work
         return (type == value)
+
+def check_type(value, type):
+    if not is_type(value, type):
+        raise Exception('Incorrect type for value: ' + str(value) + ' ' + str(type))

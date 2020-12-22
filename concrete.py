@@ -1,5 +1,6 @@
 import math
 import state
+import typecheck
 
 class Concrete():
     def __init__(self, value):
@@ -11,6 +12,9 @@ class Concrete():
     def __hash__(self):
         return hash(self.value)
 
+    def assimilate(self, context, value):
+        return value
+    
     def coalesce(self, context, value):
         # Fallback to return final value
         # Safe option when provided with no other
@@ -113,6 +117,10 @@ class ConcreteObject(Concrete):
         self.values = values
         self.types = types
 
+        # Check types when we are sure all are initialised
+        for attribute in self.values:
+            typecheck.check_type(self.values[attribute], self.types[attribute])
+
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.values == value.values and self.types == value.types
 
@@ -121,6 +129,9 @@ class ConcreteObject(Concrete):
 
     def __repr__(self):
         return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
+
+    def assimilate(self, context, value):
+        self.coalesce(context, value)
 
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
@@ -213,11 +224,28 @@ class ConcreteAlgebraicType(Concrete):
     def __repr__(self):
         return '<AlgebraicType: ' + str(self.value) + '>'
 
+class ConcreteFunctionType(Concrete):
+    def __getitem__(self, index):
+        return self.value[index]
+
+    def __repr__(self):
+        return '<FunctionType: ' + str(self.value) + '>'
+
+    def assimilate(self, context, value):
+        if isinstance(value, ConcreteFunction):
+            value.set_type(self)
+        elif isinstance(value, ConcreteExternalFunction):
+            value.set_type(self)
+        
+        return value
+
 class ConcreteFunction(Concrete):
-    def __init__(self, context, bind, statements):
+    def __init__(self, context, bind, statements,
+            type=ConcreteFunctionType([ConcreteType('Any'), ConcreteType('Any')])):
         self.context = context
         self.bind = bind
         self.statements = statements
+        self.type = type
 
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.statements == value.statements
@@ -228,9 +256,14 @@ class ConcreteFunction(Concrete):
     def __repr__(self):
         return '<Function: ' + str(id(self)) + '>'
 
+    def set_type(self, type):
+        self.type = type
+
     def coalesce(self, context, value=ConcreteEmpty()):
         if isinstance(value, ConcreteUndefined):
             return self
+
+        typecheck.check_type(value, self.type[0])
         
         new_context = self.context.create_function_context(self.bind, value)
         
@@ -240,12 +273,21 @@ class ConcreteFunction(Concrete):
 
         self.context.close_function_context(new_context)
 
+        if len(self.type[1:]) > 1:
+            if isinstance(return_value, ConcreteFunction) or isinstance(return_value, ConcreteExternalFunction):
+                return_value.set_type(self.type[1:])
+        else:
+            typecheck.check_type(return_value, self.type[-1])
+
+        # Also check if the return is another function and apply correct type signature
+
         return return_value
 
 class ConcreteExternalFunction(Concrete):
-    def __init__(self, context, value):
+    def __init__(self, context, value, type=ConcreteFunctionType([ConcreteType('Any'), ConcreteType('Any')])):
         self.context = context
-        super().__init__(value)
+        self.value = value
+        self.type = type
 
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.value == value.value
@@ -255,6 +297,9 @@ class ConcreteExternalFunction(Concrete):
 
     def __repr__(self):
         return '<ExternalFunction>'
+
+    def set_type(self, type):
+        self.type = type
 
     def coalesce(self, context, value=ConcreteEmpty()):
         if isinstance(value, ConcreteUndefined):

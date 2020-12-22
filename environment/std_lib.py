@@ -49,8 +49,8 @@ values = {
 }
 
 types = {
-    'print': concrete.ConcreteType('ConcreteExternalFunction'),
-    'is_equal': concrete.ConcreteType('ConcreteExternalFunction'),
-    'if': concrete.ConcreteType('ConcreteExternalFunction'),
-    'for_each': concrete.ConcreteType('ConcreteExternalFunction')
+    'print': concrete.ConcreteType('ExternalFunction'),
+    'is_equal': concrete.ConcreteType('ExternalFunction'),
+    'if': concrete.ConcreteType('ExternalFunction'),
+    'for_each': concrete.ConcreteType('ExternalFunction')
 }

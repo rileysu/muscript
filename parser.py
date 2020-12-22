@@ -112,7 +112,7 @@ class Parser:
 
             type_definition : _type expression
             assign_definition : _assign expression
-            matter_statement: (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition)
+            matter_statement : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition)
             expression_statement: expression
             ?statement : (matter_statement | expression_statement) _end_statement
             
@@ -152,11 +152,11 @@ class Parser:
             _type : ":"
             _assign : "="
             _access: "."
-            name : /[_\-a-zA-Z][_\-a-zA-Z0-9]*/
+            name : /[_a-zA-Z][_\-a-zA-Z0-9]*/
             _function_arrow : "->"
             _algebraic_seperator : "|"
-            integer : /\d+/
-            decimal : /\d+\.\d*/
+            integer : /-?\d+/
+            decimal : /-?\d+\.\d*/
             string : /\'[^\']*\'/
 
             _end_statement : ";"
