@@ -33,6 +33,10 @@ class TreeTransformer(Transformer):
                 out['type'] = value['expression']
             elif value['name'] == 'assign_definition':
                 out['value'] = value['expression']
+            elif value['name'] == 'typeassign_definition':
+                out['value'] = value['expression']
+                out['type'] = value['expression']
+
 
         return out
 
@@ -81,6 +85,12 @@ class TreeTransformer(Transformer):
             'expression': values[0]
         }
 
+    def typeassign_definition(self, values):
+        return {
+            'name': 'typeassign_definition',
+            'expression': values[0]
+        }
+
     def expression(self, values):
         return Expression(values)
 
@@ -96,6 +106,9 @@ class TreeTransformer(Transformer):
                 type = value['expression']
             elif value['name'] == 'assign_definition':
                 assign = value['expression']
+            elif value['name'] == 'typeassign_definition':
+                assign = value['expression']
+                type = value['expression']
 
         return MatterStatement(identifier, assign, type)
 
@@ -112,7 +125,8 @@ class Parser:
 
             type_definition : _type expression
             assign_definition : _assign expression
-            matter_statement : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition)
+            typeassign_definition: _typeassign expression
+            matter_statement : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition) | (identifier typeassign_definition)
             expression_statement: expression
             ?statement : (matter_statement | expression_statement) _end_statement
             
@@ -137,7 +151,7 @@ class Parser:
             
             set : _open_set [expression (_seperator expression)*] _close_set
            
-            object_definition : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition)
+            object_definition : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition) | (identifier typeassign_definition)
             object : _open_object [object_definition (_seperator object_definition)*] _close_object
 
             ?constant : integer | decimal | string
@@ -151,6 +165,7 @@ class Parser:
             _seperator : ","
             _type : ":"
             _assign : "="
+            _typeassign : ":="
             _access: "."
             name : /[_a-zA-Z][_\-a-zA-Z0-9]*/
             _function_arrow : "->"

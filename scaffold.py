@@ -4,7 +4,7 @@ import context
 
 parser = Parser()
 
-with open('examples/include.mu') as f:
+with open('examples/example6.mu') as f:
     text = f.read()
 
     tree = parser.parse(text)
