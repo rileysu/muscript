@@ -1,6 +1,6 @@
 std = import 'std';
 
-double: Integer -> Decimal -> Decimal = @int {
+double: Integer -> Integer -> Decimal = @int {
   return @dec {
     return 2.2;
   };

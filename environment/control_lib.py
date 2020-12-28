@@ -85,9 +85,9 @@ values = {
 }
 
 types = {
-    'if': concrete.ConcreteType('ConcreteExternalFunction'),
-    'only': concrete.ConcreteType('ConcreteExternalFunction'),
-    'while': concrete.ConcreteType('ConcreteExternalFunction'),
-    'for_each': concrete.ConcreteType('ConcreteExternalFunction'),
-    'match': concrete.ConcreteType('ConcreteExternalFunction')
+    'if': concrete.ConcreteType('ExternalFunction'),
+    'only': concrete.ConcreteType('ExternalFunction'),
+    'while': concrete.ConcreteType('ExternalFunction'),
+    'for_each': concrete.ConcreteType('ExternalFunction'),
+    'match': concrete.ConcreteType('ExternalFunction')
 }

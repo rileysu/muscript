@@ -31,7 +31,7 @@ class Scope():
         return Scope(self.values.copy(), self.types.copy())
 
 class Context():
-    def __init__(self, scope, is_halted=False, is_returnable=False):
+    def __init__(self, scope, is_halted=False, is_returnable=True):
         self.scope = scope
         self.is_halted = is_halted
         self.is_returnable = is_returnable
