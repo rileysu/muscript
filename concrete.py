@@ -252,6 +252,9 @@ class ConcreteFunctionType(Concrete):
     def __getitem__(self, index):
         return self.value[index]
 
+    def __len__(self):
+        return len (self.value)
+
     def __repr__(self):
         return '<FunctionType: ' + str(self.value) + '>'
 
@@ -286,7 +289,7 @@ class ConcreteFunction(Concrete):
         if isinstance(value, ConcreteUndefined):
             return self
 
-        if self.type and isinstance(self, ConcreteFunctionType):
+        if self.type and isinstance(self.type, ConcreteFunctionType):
                 typecheck.check_type(value, self.type[0])
         
         new_context = self.context.create_function_context(self.bind, value)
@@ -301,7 +304,7 @@ class ConcreteFunction(Concrete):
         if self.type and isinstance(self.type, ConcreteFunctionType):
             if len(self.type[1:]) > 1:
                 if isinstance(return_value, ConcreteFunction) or isinstance(return_value, ConcreteExternalFunction):
-                    return_value.type = self.type[1:]
+                    return_value.type = ConcreteFunctionType(self.type[1:])
             else:
                 typecheck.check_type(return_value, self.type[-1])
 

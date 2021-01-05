@@ -1,14 +1,14 @@
 io = import 'io';
 
-a = 1;
+a = 1.1;
 
 double: Integer -> Integer -> Decimal = @int {
   return @dec {
-    return 2.1;
+    return 2;
   };
 };
 
-io.print (double a a);
+io.print (double 1 1);
 
 f: Function = @x {
   return x;
