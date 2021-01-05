@@ -4,7 +4,7 @@ a = 1.1;
 
 double: Integer -> Integer -> Decimal = @int {
   return @dec {
-    return 2;
+    return 2.2;
   };
 };
 

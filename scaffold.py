@@ -1,4 +1,4 @@
-from mu_parser import Parser, TreeTransformer
+from parse import Parser, TreeTransformer
 from environment import init_scope_values, init_scope_types
 import context
 import sys
