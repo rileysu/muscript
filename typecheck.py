@@ -7,6 +7,8 @@ import math
 def is_type(value, type):
     if isinstance(type, concrete.ConcreteUndefined) or isinstance(value, concrete.ConcreteUndefined):
         return True
+    elif isinstance(value, concrete.ConcreteMatter):
+        return is_type(value.value, type)
     elif isinstance(type, concrete.ConcreteType):
         if type.value == 'Integer':
             return isinstance(value, concrete.ConcreteInteger)
@@ -58,6 +60,8 @@ def is_type(value, type):
             return all((attribute in value.values and is_type(type.types[attribute], value.values[attribute])) for attribute in type.types)
         else:
             return False
+    elif isinstance(type, concrete.ConcreteMatter):
+        return is_type(value, type.value)
     elif isinstance(type, concrete.ConcreteAlgebraicType):
         return any(is_type(x, value) for x in type.value)
     elif isinstance(type, concrete.ConcreteFunctionType):

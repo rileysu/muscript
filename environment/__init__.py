@@ -1,35 +1,26 @@
 import concrete
 import context
+import environment.check as check
 
-import environment.std_lib as std_lib
+import environment.io_lib as io_lib
 import environment.control_lib as control_lib
 import environment.list_lib as list_lib
 import environment.include_lib as include_lib
 
-def mu_integer_add(context, first_value):
-    def load_second_value(context, second_value):
-        return concrete.ConcreteInteger(first_value.value + second_value.value)
-
-    return concrete.ConcreteExternalFunction(context, load_second_value)
-
-integer = {
-    'add': concrete.ConcreteExternalFunction(context.Context(context.Scope({}, {}), is_halted=True), mu_integer_add)
-}
-
 def mu_import(scope, value):
-    if isinstance(value, concrete.ConcreteString):
-        if value.value == 'std':
-            return concrete.ConcreteObject(std_lib.values, std_lib.types)
-        elif value.value == 'include':
-            return concrete.ConcreteObject(include_lib.values, include_lib.types)
-        elif value.value == 'control':
-            return concrete.ConcreteObject(control_lib.values, control_lib.types)
-        elif value.value == 'integer':
-            return concrete.ConcreteObject(integer, {})
-        elif value.value == 'list':
-            return concrete.ConcreteObject(list_lib.values, list_lib.types)
-        else:
-            return concrete.ConcreteEmpty()
+    check.check_arg(value, concrete.ConcreteType('String'))
+
+    import_map = {
+        'io': concrete.ConcreteObject(io_lib.values, io_lib.types),
+        'control': concrete.ConcreteObject(control_lib.values, control_lib.types),
+        'list': concrete.ConcreteObject(list_lib.values, list_lib.types)
+    }
+
+    if value.value in import_map:
+        return import_map[value.value]
+    else:
+        raise Exception('Could not import the requested library: ' + str(value))
+
 
 init_scope_values = {
     'import': concrete.ConcreteExternalFunction(context.Context(context.Scope({}, {}), is_halted=True), mu_import),

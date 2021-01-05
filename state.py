@@ -74,14 +74,18 @@ class Ellipsis(Value):
 
 class Variable(Value):
     def evaluate(self, context):
-        if context.get_scope().has_value(self.value[0]):
+        if context.scope.has_value(self.value[0]):
+
+            type = context.scope.get_type(self.value[0])
+            
             #Already evaluated on store
-            out = context.get_scope().get_value(self.value[0])
+            value = context.scope.get_value(self.value[0])
 
             for name in self.value[1:]:
-                out = out.get(name)
+                type = value.get_type(name)
+                value = value.get(name)
 
-            return out
+            return concrete.ConcreteMatter(value, type)
         else:
             quit('Undefined Variable: ' + str(self.value)) #Undeclared identifier
 
@@ -101,15 +105,19 @@ class Expression(Value):
             else:
                 out = value.evaluate(context)
 
+        # Make sure all values are resolved
+        out = out.resolve()
+
         return out
 
 class AlgebraicType(Value):
     def evaluate(self, context):
-        return concrete.ConcreteAlgebraicType(list(map(lambda x: x.evaluate(context), self.value)))
+        return concrete.ConcreteAlgebraicType(list(map(lambda x: x.evaluate(context).resolve(), self.value)))
 
 class FunctionType(Value):
     def evaluate(self, context):
-        return concrete.ConcreteFunctionType(list(map(lambda x: x.evaluate(context), self.value)))
+        #Needs to additionally handle the case of generic types
+        return concrete.ConcreteFunctionType(list(map(lambda x: x.evaluate(context).resolve(), self.value)))
 
 class Function(Value):
     def __init__(self, bind, statements):
@@ -128,7 +136,7 @@ class Statement():
         pass
 
 class MatterStatement(Statement):
-    def __init__(self, identifier, value, type=None):
+    def __init__(self, identifier, value, type):
         self.identifier = identifier
         self.value = value
         self.type = type
@@ -136,12 +144,12 @@ class MatterStatement(Statement):
     def execute(self, context):
         if self.value:
             if self.type:
-                context.get_scope().set_value_type(self.identifier, self.type.evaluate(context).assimilate(context, self.value.evaluate(context)), self.type.evaluate(context))
+                context.scope.set_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context))
             else:
-                context.get_scope().set_value_type(self.identifier, self.value.evaluate(context), concrete.ConcreteUndefined())
+                context.scope.set_value_type(self.identifier, self.value.evaluate(context), concrete.ConcreteUndefined())
         else:
             if self.type: 
-                context.get_scope().set_value_type(self.identifier, self.type.evaluate(context).assimilate(context, concrete.ConcreteUndefined()), self.type.evaluate(context))
+                context.scope.set_value_type(self.identifier, concrete.ConcreteUndefined(), self.type.evaluate(context))
             else:
                 raise Exception('No value or type specified in statement!')
 

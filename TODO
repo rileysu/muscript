@@ -1,4 +1,4 @@
-Function Types
 Argparse and proper command line interface
-Import relative files
 System librarys in MuScript
+Object self reference and object stack in context
+Generics for functions

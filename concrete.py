@@ -1,4 +1,5 @@
 import math
+
 import state
 import typecheck
 
@@ -12,49 +13,55 @@ class Concrete():
     def __hash__(self):
         return hash(self.value)
 
-    def assimilate(self, context, value):
-        return value
+    def copy(self):
+        if isinstance(self.value, (int, float, str)):
+            return self.__init__(self.value)
+        else:
+            return self.__init__(self.value.copy())
     
     def coalesce(self, context, value):
         # Fallback to return final value
         # Safe option when provided with no other
         if isinstance(value, ConcreteUndefined):
-            return self
+            return self.copy()
         else:
-            return value
+            return value.copy()
+
+    def resolve(self):
+        return self
 
 class ConcreteInteger(Concrete):
     def __int__(self):
         return self.value
 
     def __repr__(self):
-        return self.value.__repr__()
+        return str(self.value)
 
 class ConcreteDecimal(Concrete):
     def __float__(self):
         return self.value
 
     def __repr__(self):
-        return self.value.__repr__()
+        return str(self.value)
 
 class ConcreteString(Concrete):
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
-            return self
+            return self.copy()
         elif isinstance(value, ConcreteString):
             return ConcreteString(self.value + value.value)
         else:
-            return value
+            return value.copy()
 
     def __repr__(self):
-        return self.value.__repr__()
+        return str(self.value)
 
 class ConcreteList(Concrete):
     def __len__(self):
         return len(self.value)
 
     def __repr__(self):
-        return self.value.__repr__()
+        return str(self.value)
 
     def __getitem__(self, index):
         seq_len = self.inf_seq_length() if self.is_infinite() else len(self.value)
@@ -71,9 +78,6 @@ class ConcreteList(Concrete):
             raise Exception('Could not set index in infinite empty list')
         else:
             self.value[int(index) % seq_len] = value
-
-    def copy(self):
-        return ConcreteList(self.value.copy())
     
     def is_infinite(self):
         return ConcreteEllipsis() in self.value
@@ -83,14 +87,14 @@ class ConcreteList(Concrete):
 
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
-            return self
+            return self.copy()
         elif isinstance(value, ConcreteList):
             if not (self.is_infinite() or value.is_infinite()):
                 return ConcreteList(self.value.copy() + value.value.copy())
             else:
                 raise Exception('Could not coalesce lists where at least one is infinite')
         else:
-            return value
+            return value.copy()
     
     def __iter__(self):
         return iter(self.value)
@@ -104,11 +108,11 @@ class ConcreteSet(Concrete):
     
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
-            return self
+            return self.copy()
         elif isinstance(value, ConcreteSet):
             return ConcreteSet(self.value.copy() + value.value.copy())
         else:
-            return value
+            return value.copy()
 
 # Dict values and types to concrete objects
 class ConcreteObject(Concrete):
@@ -128,14 +132,11 @@ class ConcreteObject(Concrete):
         return hash((self.values, self.types))
 
     def __repr__(self):
-        return '<Object: ' + self.values.__repr__() + ' ' + self.types.__repr__() + '>'
-
-    def assimilate(self, context, value):
-        self.coalesce(context, value)
+        return '<Object: ' + str(self.values) + ' ' + str(self.types) + '>'
 
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
-            return self
+            return self.copy()
         elif isinstance(value, ConcreteObject):
             values = self.values.copy()
             types = self.types.copy()
@@ -150,7 +151,7 @@ class ConcreteObject(Concrete):
 
             return ConcreteObject(values, types)
         else:
-            return value
+            return value.copy()
 
     def get(self, key):
         return self.values[key]
@@ -158,11 +159,34 @@ class ConcreteObject(Concrete):
     def get_type(self, key):
         return self.types[key]
 
+# Defines the type for a variable
+# The type is useful for dynamic function type checking
+class ConcreteMatter(Concrete):
+    def __init__(self, value, type):
+        self.value = value
+        self.type = type
+
+    def __repr__(self):
+        return '<Matter: ' + str(self.value) + ' ' + str(self.type) + '>'
+
+    def coalesce(self, context, value):
+        if isinstance(value, ConcreteUndefined):
+            return self.value.copy()
+        elif isinstance(self.value, ConcreteFunction):
+            func = self.value.copy()
+            func.type = self.type
+            return func.coalesce(context, value)
+        else:
+            return self.value.coalesce(context, value)
+
+    def resolve(self):
+        return self.value
+
 # Exists to easily define and check empty value
 # Concrete is already defined as empty
 class ConcreteEmpty(Concrete):
     def __init__(self):
-        super().__init__(None)
+        self.value = None
 
     def __repr__(self):
         return '<Empty>'
@@ -170,14 +194,14 @@ class ConcreteEmpty(Concrete):
 
 class ConcreteEllipsis(Concrete):
     def __init__(self):
-        super().__init__(None)
+        self.value = None
 
     def __repr__(self):
         return '<Ellipsis>'
 
 class ConcreteUndefined(Concrete):
     def __init__(self):
-        super().__init__(None)
+        self.value = None
 
     def __repr__(self):
         return '<Undefined>'
@@ -240,12 +264,11 @@ class ConcreteFunctionType(Concrete):
         return value
 
 class ConcreteFunction(Concrete):
-    def __init__(self, context, bind, statements,
-            type=ConcreteFunctionType([ConcreteType('Any'), ConcreteType('Any')])):
+    def __init__(self, context, bind, statements, type=None):
         self.context = context
         self.bind = bind
         self.statements = statements
-        self.type = type
+        self.type = None
 
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.statements == value.statements
@@ -256,35 +279,36 @@ class ConcreteFunction(Concrete):
     def __repr__(self):
         return '<Function: ' + str(id(self)) + '>'
 
-    def set_type(self, type):
-        self.type = type
+    def copy(self):
+        return ConcreteFunction(self.context.copy(), self.bind, self.statements.copy(), self.type.copy() if self.type else None)
 
     def coalesce(self, context, value=ConcreteEmpty()):
         if isinstance(value, ConcreteUndefined):
             return self
 
-        typecheck.check_type(value, self.type[0])
+        if self.type and isinstance(self, ConcreteFunctionType):
+                typecheck.check_type(value, self.type[0])
         
         new_context = self.context.create_function_context(self.bind, value)
         
         new_context.execute(self.statements)
 
-        return_value = new_context.get_return_value()
+        return_value = new_context.return_value
 
         self.context.close_function_context(new_context)
-
-        if len(self.type[1:]) > 1:
-            if isinstance(return_value, ConcreteFunction) or isinstance(return_value, ConcreteExternalFunction):
-                return_value.set_type(self.type[1:])
-        else:
-            typecheck.check_type(return_value, self.type[-1])
-
+        
         # Also check if the return is another function and apply correct type signature
+        if self.type and isinstance(self.type, ConcreteFunctionType):
+            if len(self.type[1:]) > 1:
+                if isinstance(return_value, ConcreteFunction) or isinstance(return_value, ConcreteExternalFunction):
+                    return_value.type = self.type[1:]
+            else:
+                typecheck.check_type(return_value, self.type[-1])
 
         return return_value
 
 class ConcreteExternalFunction(Concrete):
-    def __init__(self, context, value, type=ConcreteFunctionType([ConcreteType('Any'), ConcreteType('Any')])):
+    def __init__(self, context, value, type=None):
         self.context = context
         self.value = value
         self.type = type
