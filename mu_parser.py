@@ -122,7 +122,6 @@ class Parser:
     def __init__(self):
         self.lark = Lark("""
             start: statement+
-
             type_definition : _type expression
             assign_definition : _assign expression
             typeassign_definition: _typeassign expression
@@ -144,24 +143,19 @@ class Parser:
                 | object
                 | (_open_paren expression _close_paren))
             expression : (algebraic_type | function_type | _base_expression)+
-
             function : _open_function statement+ _close_function
-
             list : _open_list [expression (_seperator expression)*] _close_list
             
             set : _open_set [expression (_seperator expression)*] _close_set
            
             object_definition : (identifier type_definition assign_definition) | (identifier type_definition) | (identifier assign_definition) | (identifier typeassign_definition)
             object : _open_object [object_definition (_seperator object_definition)*] _close_object
-
             ?constant : integer | decimal | string
-
             identifier : name
             variable: name (_access name)*
            
             function_bind : name?
             _open_function : "@" function_bind  "{"
-
             _seperator : ","
             _type : ":"
             _assign : "="
@@ -173,7 +167,6 @@ class Parser:
             integer : /-?\d+/
             decimal : /-?\d+\.\d*/
             string : /\'[^\']*\'/
-
             _end_statement : ";"
             _close_function : _close_curly_brace
             _open_list : "["
@@ -185,7 +178,6 @@ class Parser:
             _open_object : "{"
             _close_object : _close_curly_brace
             _close_curly_brace : "}"
-
             %import common.WS
             %ignore WS
         """, parser="lalr")

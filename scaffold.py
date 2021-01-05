@@ -1,10 +1,11 @@
-from parser import Parser, TreeTransformer
+
+from mu_parser import Parser, TreeTransformer
 from environment import init_scope_values, init_scope_types
 import context
 
 parser = Parser()
 
-with open('examples/example6.mu') as f:
+with open('examples/example.mu') as f:
     text = f.read()
 
     tree = parser.parse(text)

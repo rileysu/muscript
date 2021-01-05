@@ -307,3 +307,16 @@ class ConcreteExternalFunction(Concrete):
 
         new_context = self.context.copy()
         return self.value(new_context, value)
+
+class ConcreteExternalData(Concrete):
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, value):
+        return isinstance(value, type(self)) and self.value == value.value
+
+    def __hash__(self):
+        return hash(self.value)
+
+    def __repr__(self):
+        return '<ExternalData>'
