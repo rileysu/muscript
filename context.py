@@ -31,15 +31,18 @@ class Scope():
         return Scope(self.values.copy(), self.types.copy())
 
 class Context():
-    def __init__(self, scope, is_halted=False, is_returnable=True):
+    def __init__(self, scope, is_halted=False, is_returnable=True, object_stack=[]):
         self.scope = scope
         self.is_halted = is_halted
         self.is_returnable = is_returnable
         self.return_value = concrete.ConcreteEmpty()
+        self.object_stack = object_stack
 
         def return_function(context, value):
             self.halt()
             self.return_value = value
+
+            return concrete.ConcreteEmpty()
 
         self.return_function = return_function
 
@@ -50,16 +53,19 @@ class Context():
                     concrete.ConcreteType('ExternalFunction'))
 
     def copy(self):
-        return Context(self.scope.copy(), self.is_halted, self.is_returnable)
+        return Context(self.scope.copy(), self.is_halted, self.is_returnable, self.object_stack.copy())
 
     def halt(self):
         self.is_halted = True
+    
+    def push_object(self, value):
+        self.object_stack.append(value)
 
-    def get_scope(self):
-        return self.scope
+    def pop_object(self):
+        return self.object_stack.pop()
 
-    def get_return_value(self):
-        return self.return_value
+    def reset_objects(self):
+        self.object_stack = []
 
     def execute(self, statements):
         for statement in statements:
@@ -78,7 +84,7 @@ class Context():
     # Apply changed variables to parent context
     def close_function_context(self, context):
         for attribute in self.scope.values:
-            if context.get_scope().has_value(attribute):
-                self.get_scope().set_value_type(attribute, 
-                        context.get_scope().get_value(attribute), 
-                        context.get_scope().get_type(attribute))
+            if context.scope.has_value(attribute):
+                self.scope.set_value_type(attribute, 
+                        context.scope.get_value(attribute), 
+                        context.scope.get_type(attribute))

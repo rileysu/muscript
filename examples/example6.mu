@@ -1,3 +1,3 @@
-a := 2;
+io = import 'io';
 
-a = 3;
+io.print 'Hello World!';
