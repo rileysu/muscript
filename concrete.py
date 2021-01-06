@@ -172,7 +172,8 @@ class ConcreteMatter(Concrete):
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
             return self.value.copy()
-        elif isinstance(self.value, ConcreteFunction):
+        
+        if isinstance(self.value, ConcreteFunction):
             func = self.value.copy()
             func.type = self.type
             return func.coalesce(context, value)

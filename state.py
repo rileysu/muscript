@@ -40,22 +40,28 @@ class Object(Value):
     def evaluate(self, context):
         values = {}
         types = {}
-       
+
+        # Ensure changes don't carry up to previous contexts
+        new_context = context.copy()
+        
         # Structure types and values for concrete types
         # Give values and types undefined if not defined and otherwise give the value specified
         for key in self.values:
             # Ignore type check until implemented
             if self.values[key]:
-                values[key] = self.values[key].evaluate(context)
+                values[key] = self.values[key].evaluate(new_context)
             else:
                 values[key] = concrete.ConcreteUndefined()
             if self.types[key]:
-                types[key] = self.types[key].evaluate(context)
+                types[key] = self.types[key].evaluate(new_context)
             # Otherwise set key to the any type
             else:
                 types[key] = concrete.ConcreteUndefined()
 
-        return concrete.ConcreteObject(values, types)
+        return_object = concrete.ConcreteObject(values, types)
+        new_context.parent_object = return_object
+
+        return return_object
 
 class Empty(Value):
     def __init__(self):

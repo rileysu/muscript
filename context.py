@@ -31,12 +31,12 @@ class Scope():
         return Scope(self.values.copy(), self.types.copy())
 
 class Context():
-    def __init__(self, scope, is_halted=False, is_returnable=True, object_stack=[]):
+    def __init__(self, scope, is_halted=False, is_returnable=True, parent_object=None):
         self.scope = scope
         self.is_halted = is_halted
         self.is_returnable = is_returnable
         self.return_value = concrete.ConcreteEmpty()
-        self.object_stack = object_stack
+        self.parent_object = parent_object
 
         def return_function(context, value):
             self.halt()
@@ -52,20 +52,18 @@ class Context():
                     concrete.ConcreteExternalFunction(self, self.return_function),
                     concrete.ConcreteType('ExternalFunction'))
 
+        # Init scope if inside object
+        if self.parent_object:
+            print(self.parent_object)
+            self.scope.set_value_type('self',
+                    self.parent_object,
+                    self.parent_object)
+
     def copy(self):
-        return Context(self.scope.copy(), self.is_halted, self.is_returnable, self.object_stack.copy())
+        return Context(self.scope.copy(), self.is_halted, self.is_returnable, self.parent_object)
 
     def halt(self):
         self.is_halted = True
-    
-    def push_object(self, value):
-        self.object_stack.append(value)
-
-    def pop_object(self):
-        return self.object_stack.pop()
-
-    def reset_objects(self):
-        self.object_stack = []
 
     def execute(self, statements):
         for statement in statements:
