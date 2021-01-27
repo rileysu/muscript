@@ -4,13 +4,13 @@ import typecheck
 import context
 
 def mu_if(context, cond):
-    check.check_arg(cond, concrete.ConcreteInteger)
+    check.check_arg(cond, concrete.ConcreteInteger, context)
 
     def then(context, then_func):
-        check.check_arg(then_func, concrete.ConcreteFunction)
+        check.check_arg(then_func, concrete.ConcreteFunction, context)
 
         def els(context, else_func):
-            check.check_arg(else_func, concrete.ConcreteFunction)
+            check.check_arg(else_func, concrete.ConcreteFunction, context)
 
             if cond != concrete.ConcreteInteger(0):
                 return then_func.coalesce(context, concrete.ConcreteEmpty())
@@ -22,10 +22,10 @@ def mu_if(context, cond):
     return concrete.ConcreteExternalFunction(context, then)
 
 def mu_only(context, cond):
-    check.check_arg(cond, concrete.ConcreteInteger)
+    check.check_arg(cond, concrete.ConcreteInteger, context)
 
     def then(context, then_func):
-        check.check_arg(then_func, concrete.ConcreteFunction)
+        check.check_arg(then_func, concrete.ConcreteFunction, context)
 
         if cond != concrete.ConcreteInteger(0):
             return then_func.coalesce(context, concrete.ConcreteEmpty())
@@ -35,10 +35,10 @@ def mu_only(context, cond):
     return concrete.ConcreteExternalFunction(context, then)
 
 def mu_while(context, cond):
-    check.check_arg(cond, concrete.ConcreteInteger)
+    check.check_arg(cond, concrete.ConcreteInteger, context)
 
     def loop(context, func):
-        check.check_arg(func, concrete.ConcreteFunction)
+        check.check_arg(func, concrete.ConcreteFunction, context)
 
         while cond != concrete.ConcreteInteger(0):
             func.coalesce(context, concrete.ConcreteEmpty())
@@ -48,10 +48,10 @@ def mu_while(context, cond):
     return concrete.ConcreteExternalFunction(context, loop)
 
 def mu_for_each(context, iterable):
-    check.check_arg(iterable, [concrete.ConcreteList, concrete.ConcreteSet])
+    check.check_arg(iterable, [concrete.ConcreteList, concrete.ConcreteSet], context)
     
     def loop(context, func):
-        check.check_arg(func, concrete.ConcreteFunction)
+        check.check_arg(func, concrete.ConcreteFunction, context)
 
         for element in iterable:
             func.coalesce(context, element)
@@ -63,13 +63,13 @@ def mu_for_each(context, iterable):
 def mu_match(context, value):
 
     def collect_maps(context, pattern_maps):
-        check.check_arg(pattern_maps, concrete.ConcreteList)
+        check.check_arg(pattern_maps, concrete.ConcreteList, context)
 
         for pattern_map in pattern_maps:
-            check.check_arg(pattern_map, concrete.ConcreteList)
-            check.check_arg(pattern_map[1], concrete.ConcreteFunction)
+            check.check_arg(pattern_map, concrete.ConcreteList, context)
+            check.check_arg(pattern_map[1], concrete.ConcreteFunction, context)
 
-            if typecheck.is_type(value, pattern_map[0]):
+            if typecheck.is_type(value, pattern_map[0], context):
                 return pattern_map[1].coalesce(context, value)
 
     return concrete.ConcreteExternalFunction(context, collect_maps)

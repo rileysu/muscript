@@ -109,7 +109,7 @@ class TreeTransformer(Transformer):
             elif value['name'] == 'typeassign_definition':
                 assign = value['expression']
                 type = value['expression']
-
+    
         return MatterStatement(identifier, assign, type)
 
     def expression_statement(self, values):

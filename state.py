@@ -58,7 +58,7 @@ class Object(Value):
             else:
                 types[key] = concrete.ConcreteUndefined()
 
-        return_object = concrete.ConcreteObject(values, types)
+        return_object = concrete.ConcreteObject(values, types, context)
         new_context.parent_object = return_object
 
         return return_object
@@ -148,14 +148,23 @@ class MatterStatement(Statement):
         self.type = type
 
     def execute(self, context):
+        # Modify context so they can self reference 
+        # Matter Statements can't be nested so this should be fine
+        # When the actual value is set this is overwritten and only references in the actual object remain
+        context.scope.set_value_type(self.identifier, concrete.ConcreteSelfReference(self.identifier), concrete.ConcreteUndefined(), context)
+
+        """print(self.identifier, 
+                self.value.evaluate(context) if self.value else None,
+                self.type.evaluate(context) if self.type else None)"""
+
         if self.value:
             if self.type:
-                context.scope.set_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context))
+                context.scope.set_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context), context)
             else:
-                context.scope.set_value_type(self.identifier, self.value.evaluate(context), concrete.ConcreteUndefined())
+                context.scope.set_value_type(self.identifier, self.value.evaluate(context), concrete.ConcreteUndefined(), context)
         else:
             if self.type: 
-                context.scope.set_value_type(self.identifier, concrete.ConcreteUndefined(), self.type.evaluate(context))
+                context.scope.set_value_type(self.identifier, concrete.ConcreteUndefined(), self.type.evaluate(context), context)
             else:
                 raise Exception('No value or type specified in statement!')
 

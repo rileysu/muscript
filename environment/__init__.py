@@ -7,13 +7,13 @@ import environment.control_lib as control_lib
 import environment.list_lib as list_lib
 import environment.include_lib as include_lib
 
-def mu_import(scope, value):
-    check.check_arg(value, concrete.ConcreteType('String'))
+def mu_import(context, value):
+    check.check_arg(value, concrete.ConcreteType('String'), context)
 
     import_map = {
-        'io': concrete.ConcreteObject(io_lib.values, io_lib.types),
-        'control': concrete.ConcreteObject(control_lib.values, control_lib.types),
-        'list': concrete.ConcreteObject(list_lib.values, list_lib.types)
+        'io': concrete.ConcreteObject(io_lib.values, io_lib.types, context),
+        'control': concrete.ConcreteObject(control_lib.values, control_lib.types, context),
+        'list': concrete.ConcreteObject(list_lib.values, list_lib.types, context)
     }
 
     if value.value in import_map:

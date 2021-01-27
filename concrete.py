@@ -13,6 +13,9 @@ class Concrete():
     def __hash__(self):
         return hash(self.value)
 
+    def __repr__(self):
+        return '<' + type(self).__name__ + ': ' + str(self.value) + '>'
+
     def copy(self):
         if isinstance(self.value, (int, float, str)):
             return self.__init__(self.value)
@@ -117,13 +120,13 @@ class ConcreteSet(Concrete):
 # Dict values and types to concrete objects
 class ConcreteObject(Concrete):
     # All values should have a corresponding type when the object is created
-    def __init__(self, values, types):
+    def __init__(self, values, types, context):
         self.values = values
         self.types = types
 
         # Check types when we are sure all are initialised
         for attribute in self.values:
-            typecheck.check_type(self.values[attribute], self.types[attribute])
+            typecheck.check_type(self.values[attribute], self.types[attribute], context)
 
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.values == value.values and self.types == value.types
@@ -149,7 +152,7 @@ class ConcreteObject(Concrete):
                 if not isinstance(value.types[attribute], ConcreteUndefined):
                     types[attribute] = value.types[attribute]
 
-            return ConcreteObject(values, types)
+            return ConcreteObject(values, types, context)
         else:
             return value.copy()
 
@@ -236,7 +239,7 @@ class ConcreteType(Concrete):
             return ConcreteSet(value)
         elif self.value == 'Object':
             #TODO
-            return ConcreteObject(value, {})
+            return ConcreteObject(value, {}, context)
         elif self.value == 'Function':
             #TODO
             return ConcreteFunction(context, None, [])
@@ -248,6 +251,10 @@ class ConcreteType(Concrete):
 class ConcreteAlgebraicType(Concrete):
     def __repr__(self):
         return '<AlgebraicType: ' + str(self.value) + '>'
+
+class ConcreteSelfReference(Concrete):
+    def __repr__(self):
+        return '<SelfReference: ' + str(self.value) + '>'
 
 class ConcreteFunctionType(Concrete):
     def __getitem__(self, index):
@@ -291,7 +298,7 @@ class ConcreteFunction(Concrete):
             return self
 
         if self.type and isinstance(self.type, ConcreteFunctionType):
-                typecheck.check_type(value, self.type[0])
+                typecheck.check_type(value, self.type[0], context)
         
         new_context = self.context.create_function_context(self.bind, value)
         
@@ -307,7 +314,7 @@ class ConcreteFunction(Concrete):
                 if isinstance(return_value, ConcreteFunction) or isinstance(return_value, ConcreteExternalFunction):
                     return_value.type = ConcreteFunctionType(self.type[1:])
             else:
-                typecheck.check_type(return_value, self.type[-1])
+                typecheck.check_type(return_value, self.type[-1], context)
 
         return return_value
 

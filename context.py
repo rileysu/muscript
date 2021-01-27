@@ -12,11 +12,11 @@ class Scope():
     def get_type(self, key):
         return self.types[key]
 
-    def set_value_type(self, key, value, type):
-        type = self.get_type(key) if self.has_type(key) else type
-        
+    def set_value_type(self, key, value, type, context):
+        type = self.get_type(key) if (self.has_type(key) and not type) else type
+       
         if type:
-            typecheck.check_type(value, type)
+            typecheck.check_type(value, type, context)
 
         self.values[key] = value
         self.types[key] = type
@@ -50,14 +50,15 @@ class Context():
         if is_returnable:
             self.scope.set_value_type('return',
                     concrete.ConcreteExternalFunction(self, self.return_function),
-                    concrete.ConcreteType('ExternalFunction'))
+                    concrete.ConcreteType('ExternalFunction'),
+                    self)
 
         # Init scope if inside object
         if self.parent_object:
-            print(self.parent_object)
             self.scope.set_value_type('self',
                     self.parent_object,
-                    self.parent_object)
+                    self.parent_object,
+                    self)
 
     def copy(self):
         return Context(self.scope.copy(), self.is_halted, self.is_returnable, self.parent_object)
