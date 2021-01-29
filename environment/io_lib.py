@@ -2,10 +2,7 @@ import concrete
 import context
 
 def mu_print(context, value):
-    if isinstance(value, concrete.ConcreteMatter):
-        print(value.value)
-    else:
-        print(value)
+    print(value)
 
     return concrete.ConcreteEmpty()
 

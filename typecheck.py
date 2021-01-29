@@ -1,8 +1,8 @@
 import concrete
 import math
 
-#TODO
-#Add types for Empty and Ellipsis
+class TypeException(Exception):
+    pass
 
 def is_type(value, type, context):
     if isinstance(type, concrete.ConcreteUndefined) or isinstance(value, concrete.ConcreteUndefined):
@@ -57,7 +57,7 @@ def is_type(value, type, context):
     elif isinstance(type, concrete.ConcreteObject):
         if isinstance(value, concrete.ConcreteObject):
             # Each attribute's type in the type object corresponds with the attributes value in the value object
-            return all((attribute in value.values and is_type(type.types[attribute], value.values[attribute], context)) for attribute in type.types)
+            return all((attribute in value.values and is_type(value.values[attribute], type.types[attribute], context)) for attribute in type.types)
         else:
             return False
     elif isinstance(type, concrete.ConcreteMatter):
@@ -67,12 +67,11 @@ def is_type(value, type, context):
     elif isinstance(type, concrete.ConcreteSelfReference):
         return is_type(value, context.scope.get_value(type.value), context)
     elif isinstance(type, concrete.ConcreteFunctionType):
-        # Type check done dynamically on execution and return
-        return True
+        return isinstance(value, concrete.ConcreteFunction) or isinstance(value, concrete.ConcreteExternalFunction)
     else:
         #Case will most likely not work
         return (type == value)
 
 def check_type(value, type, context):
     if not is_type(value, type, context):
-        raise Exception('Incorrect type for value: ' + str(value) + ' ' + str(type))
+        raise TypeException('Expected: ' + str(value) + ' but got: ' + str(type))

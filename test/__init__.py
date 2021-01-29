@@ -1,6 +1,6 @@
 import unittest
 
-import integer_test
+import test.objects
 
 if __name__ == '__main__':
     unittest.main()

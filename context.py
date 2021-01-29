@@ -73,10 +73,10 @@ class Context():
             else:
                 statement.execute(self)
 
-    def create_function_context(self, bind, value):
+    def create_function_context(self, bind, value, type=concrete.ConcreteUndefined()):
         new_scope = self.scope.copy()
         if bind:
-            new_scope.set_value_type(bind, value, concrete.ConcreteType('Any'))
+            new_scope.set_value_type(bind, value, type, self)
 
         return Context(new_scope, is_returnable=True)
 
@@ -86,4 +86,5 @@ class Context():
             if context.scope.has_value(attribute):
                 self.scope.set_value_type(attribute, 
                         context.scope.get_value(attribute), 
-                        context.scope.get_type(attribute))
+                        context.scope.get_type(attribute),
+                        self)

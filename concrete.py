@@ -145,11 +145,11 @@ class ConcreteObject(Concrete):
             types = self.types.copy()
 
             for attribute in value.values:
-                if not isinstance(value.values[attribute], ConcreteUndefined):
+                if not isinstance(value.values[attribute], ConcreteUndefined) or not attribute in values:
                     values[attribute] = value.values[attribute]
 
             for attribute in value.types:
-                if not isinstance(value.types[attribute], ConcreteUndefined):
+                if not isinstance(value.types[attribute], ConcreteUndefined) or not attribute in types:
                     types[attribute] = value.types[attribute]
 
             return ConcreteObject(values, types, context)
@@ -172,11 +172,13 @@ class ConcreteMatter(Concrete):
     def __repr__(self):
         return '<Matter: ' + str(self.value) + ' ' + str(self.type) + '>'
 
+    def copy(self):
+        return ConcreteMatter(self.value, self.type)
+
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
-            return self.value.copy()
-        
-        if isinstance(self.value, ConcreteFunction):
+            return self.value.copy() 
+        elif isinstance(self.value, ConcreteFunction):
             func = self.value.copy()
             func.type = self.type
             return func.coalesce(context, value)
@@ -184,7 +186,7 @@ class ConcreteMatter(Concrete):
             return self.value.coalesce(context, value)
 
     def resolve(self):
-        return self.value
+        return self.value.resolve()
 
 # Exists to easily define and check empty value
 # Concrete is already defined as empty
@@ -266,14 +268,6 @@ class ConcreteFunctionType(Concrete):
     def __repr__(self):
         return '<FunctionType: ' + str(self.value) + '>'
 
-    def assimilate(self, context, value):
-        if isinstance(value, ConcreteFunction):
-            value.set_type(self)
-        elif isinstance(value, ConcreteExternalFunction):
-            value.set_type(self)
-        
-        return value
-
 class ConcreteFunction(Concrete):
     def __init__(self, context, bind, statements, type=None):
         self.context = context
@@ -294,13 +288,21 @@ class ConcreteFunction(Concrete):
         return ConcreteFunction(self.context.copy(), self.bind, self.statements.copy(), self.type.copy() if self.type else None)
 
     def coalesce(self, context, value=ConcreteEmpty()):
+        # Resolve value since we intend to use it and not for it to carry previous type information
+        value = value.resolve()
+
         if isinstance(value, ConcreteUndefined):
             return self
 
         if self.type and isinstance(self.type, ConcreteFunctionType):
                 typecheck.check_type(value, self.type[0], context)
         
-        new_context = self.context.create_function_context(self.bind, value)
+        new_context = None
+        if self.type and isinstance(self.type, ConcreteFunctionType):
+            print(self.type)
+            new_context = self.context.create_function_context(self.bind, value, self.type[0])
+        else:
+            new_context = self.context.create_function_context(self.bind, value)
         
         new_context.execute(self.statements)
 
@@ -316,7 +318,7 @@ class ConcreteFunction(Concrete):
             else:
                 typecheck.check_type(return_value, self.type[-1], context)
 
-        return return_value
+        return return_value.resolve()
 
 class ConcreteExternalFunction(Concrete):
     def __init__(self, context, value, type=None):
@@ -331,17 +333,20 @@ class ConcreteExternalFunction(Concrete):
         return hash(self.context, self.value)
 
     def __repr__(self):
-        return '<ExternalFunction>'
+        return '<ExternalFunction: ' + str(self.value.__name__) + '>'
 
     def set_type(self, type):
         self.type = type
 
     def coalesce(self, context, value=ConcreteEmpty()):
+        # Resolve value since we intend to use it and not for it to carry previous type information
+        value = value.resolve()
+
         if isinstance(value, ConcreteUndefined):
             return self
 
         new_context = self.context.copy()
-        return self.value(new_context, value)
+        return self.value(new_context, value).resolve()
 
 class ConcreteExternalData(Concrete):
     def __init__(self, value):

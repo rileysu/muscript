@@ -46,14 +46,15 @@ class Object(Value):
         
         # Structure types and values for concrete types
         # Give values and types undefined if not defined and otherwise give the value specified
+        # Resolve values and types to ensure matter isn't transferred unknowingly
         for key in self.values:
             # Ignore type check until implemented
             if self.values[key]:
-                values[key] = self.values[key].evaluate(new_context)
+                values[key] = self.values[key].evaluate(new_context).resolve()
             else:
                 values[key] = concrete.ConcreteUndefined()
             if self.types[key]:
-                types[key] = self.types[key].evaluate(new_context)
+                types[key] = self.types[key].evaluate(new_context).resolve()
             # Otherwise set key to the any type
             else:
                 types[key] = concrete.ConcreteUndefined()
@@ -108,11 +109,13 @@ class Expression(Value):
         for value in self.value:
             if out:
                 out = out.coalesce(context, value.evaluate(context))
+                # Ensures that expressions with multiple values coalescing don't return as matter
+                out.resolve()
             else:
+                # If the expression only contains one value it can be returned as matter since
+                # something like functions should still type check regardless of whether they are in
+                # parenthesis or not
                 out = value.evaluate(context)
-
-        # Make sure all values are resolved
-        out = out.resolve()
 
         return out
 
@@ -152,10 +155,6 @@ class MatterStatement(Statement):
         # Matter Statements can't be nested so this should be fine
         # When the actual value is set this is overwritten and only references in the actual object remain
         context.scope.set_value_type(self.identifier, concrete.ConcreteSelfReference(self.identifier), concrete.ConcreteUndefined(), context)
-
-        """print(self.identifier, 
-                self.value.evaluate(context) if self.value else None,
-                self.type.evaluate(context) if self.type else None)"""
 
         if self.value:
             if self.type:
