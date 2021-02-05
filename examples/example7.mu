@@ -1,5 +1,5 @@
 io = import 'io';
 
-o = {} { a = 1 };
+a = a | 0;
 
-io.print o;
+io.print a;

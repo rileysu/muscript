@@ -13,9 +13,15 @@ class Scope():
         return self.types[key]
 
     def set_value_type(self, key, value, type, context):
-        type = self.get_type(key) if (self.has_type(key) and not type) else type
-       
-        if type:
+        if type == None:
+            if self.has_type(key):
+                type = self.get_type(key)
+            else:
+                type = concrete.ConcreteUndefined()
+
+        if value == None: 
+            value = concrete.ConcreteUndefined()
+        else:
             typecheck.check_type(value, type, context)
 
         self.values[key] = value

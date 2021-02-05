@@ -27,33 +27,33 @@ class TestObjects(unittest.TestCase):
                 }, {
                     'a': concrete.ConcreteUndefined(),
                     'b': concrete.ConcreteUndefined()
-                }, test.debug.ctx)
+                })
             }, {
                 'int': concrete.ConcreteType('Integer'),
                 'dec': concrete.ConcreteType('Decimal'),
                 'list': concrete.ConcreteType('List'),
                 'set': concrete.ConcreteType('Set'),
                 'object': concrete.ConcreteType('Object')
-            }, test.debug.ctx)
+            })
         ])
 
     def test_coalesce(self):
         logs = test.debug.execute_and_get_logs('test/objects/test_files/coalesce.mu')
 
         self.assertEqual(logs, [
-            concrete.ConcreteObject({}, {}, test.debug.ctx),
+            concrete.ConcreteObject({}, {}),
             concrete.ConcreteObject({
                 'a': concrete.ConcreteInteger(1)
             }, {
                 'a': concrete.ConcreteUndefined()
-            }, test.debug.ctx),
+            }),
             concrete.ConcreteObject({
                 'a': concrete.ConcreteInteger(3),
                 'b': concrete.ConcreteInteger(2)
             }, {
                 'a': concrete.ConcreteUndefined(),
                 'b': concrete.ConcreteUndefined()
-            }, test.debug.ctx)
+            })
         ])
 
     def test_types(self):
@@ -78,14 +78,14 @@ class TestObjects(unittest.TestCase):
                 }, {
                     'a': concrete.ConcreteUndefined(),
                     'b': concrete.ConcreteUndefined()
-                }, test.debug.ctx)
+                })
             }, {
                 'int': concrete.ConcreteUndefined(),
                 'dec': concrete.ConcreteUndefined(),
                 'list': concrete.ConcreteUndefined(),
                 'fun': concrete.ConcreteUndefined(),
                 'otherobj': concrete.ConcreteUndefined()
-            }, test.debug.ctx)
+            })
         ])
 
     def test_wrong_type(self):
@@ -105,10 +105,10 @@ class TestObjects(unittest.TestCase):
                 'f': function
             }, {
                 'f': concrete.ConcreteUndefined()
-            }, test.debug.ctx),
+            }),
             concrete.ConcreteObject({
                 'f': function
             }, {
                 'f': concrete.ConcreteUndefined()
-            }, test.debug.ctx)
+            })
         ])

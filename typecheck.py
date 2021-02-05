@@ -74,4 +74,4 @@ def is_type(value, type, context):
 
 def check_type(value, type, context):
     if not is_type(value, type, context):
-        raise TypeException('Expected: ' + str(value) + ' but got: ' + str(type))
+        raise TypeException('Expected: ' + str(type) + ' but got: ' + str(value))

@@ -17,11 +17,8 @@ class Concrete():
         return '<' + type(self).__name__ + ': ' + str(self.value) + '>'
 
     def copy(self):
-        if isinstance(self.value, (int, float, str)):
-            return self.__init__(self.value)
-        else:
-            return self.__init__(self.value.copy())
-    
+        return Concrete(self.value)
+
     def coalesce(self, context, value):
         # Fallback to return final value
         # Safe option when provided with no other
@@ -40,6 +37,9 @@ class ConcreteInteger(Concrete):
     def __repr__(self):
         return str(self.value)
 
+    def copy(self):
+        return ConcreteInteger(self.value)
+
 class ConcreteDecimal(Concrete):
     def __float__(self):
         return self.value
@@ -47,7 +47,17 @@ class ConcreteDecimal(Concrete):
     def __repr__(self):
         return str(self.value)
 
+    def copy(self):
+        return ConcreteDecimal(self.value)
+
 class ConcreteString(Concrete):
+    
+    def __repr__(self):
+        return str(self.value)
+
+    def copy(self):
+        return ConcreteString(self.value)
+
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
             return self.copy()
@@ -55,9 +65,6 @@ class ConcreteString(Concrete):
             return ConcreteString(self.value + value.value)
         else:
             return value.copy()
-
-    def __repr__(self):
-        return str(self.value)
 
 class ConcreteList(Concrete):
     def __len__(self):
@@ -82,6 +89,9 @@ class ConcreteList(Concrete):
         else:
             self.value[int(index) % seq_len] = value
     
+    def copy(self):
+        return ConcreteList(self.value.copy())
+
     def is_infinite(self):
         return ConcreteEllipsis() in self.value
 
@@ -109,6 +119,9 @@ class ConcreteSet(Concrete):
     def __iter__(self):
         return iter(self.value)
     
+    def copy(self):
+        return ConcreteSet(self.value.copy())
+
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
             return self.copy()
@@ -120,13 +133,15 @@ class ConcreteSet(Concrete):
 # Dict values and types to concrete objects
 class ConcreteObject(Concrete):
     # All values should have a corresponding type when the object is created
-    def __init__(self, values, types, context):
+    def __init__(self, values, types, context=None):
         self.values = values
         self.types = types
 
         # Check types when we are sure all are initialised
-        for attribute in self.values:
-            typecheck.check_type(self.values[attribute], self.types[attribute], context)
+        # If there is not context assume it was created externally
+        if context:
+            for attribute in self.values:
+                typecheck.check_type(self.values[attribute], self.types[attribute], context)
 
     def __eq__(self, value):
         return isinstance(value, type(self)) and self.values == value.values and self.types == value.types
@@ -136,6 +151,10 @@ class ConcreteObject(Concrete):
 
     def __repr__(self):
         return '<Object: ' + str(self.values) + ' ' + str(self.types) + '>'
+
+    def copy(self):
+        # Pass a blank context because we don't need it to do anything
+        return ConcreteObject(self.values.copy(), self.types.copy())
 
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
@@ -173,7 +192,7 @@ class ConcreteMatter(Concrete):
         return '<Matter: ' + str(self.value) + ' ' + str(self.type) + '>'
 
     def copy(self):
-        return ConcreteMatter(self.value, self.type)
+        return ConcreteMatter(self.value.copy(), self.type.copy())
 
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
@@ -197,6 +216,9 @@ class ConcreteEmpty(Concrete):
     def __repr__(self):
         return '<Empty>'
 
+    def copy(self):
+        return ConcreteEmpty()
+
 
 class ConcreteEllipsis(Concrete):
     def __init__(self):
@@ -205,16 +227,28 @@ class ConcreteEllipsis(Concrete):
     def __repr__(self):
         return '<Ellipsis>'
 
+    def copy(self):
+        return ConcreteEllipsis()
+
 class ConcreteUndefined(Concrete):
     def __init__(self):
         self.value = None
 
+    def __bool__(self):
+        return False
+
     def __repr__(self):
         return '<Undefined>'
+
+    def copy(self):
+        return ConcreteUndefined()
 
 class ConcreteType(Concrete):
     def __repr__(self):
         return '<Type: ' + str(self.value) + '>'
+
+    def copy(self):
+        return ConcreteType(self.value)
 
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
@@ -251,12 +285,24 @@ class ConcreteType(Concrete):
             raise Exception('Unrecognised type being coalesced: ' + str(self))
 
 class ConcreteAlgebraicType(Concrete):
+    def __init__(self, value):
+        self.value = value
+
+        if all(isinstance(x, ConcreteSelfReference) for x in value):
+            raise Exception('Can\'t make an algebraic type with only self references')
+
     def __repr__(self):
         return '<AlgebraicType: ' + str(self.value) + '>'
+
+    def copy(self):
+        return ConcreteAlgebraicType(self.value.copy())
 
 class ConcreteSelfReference(Concrete):
     def __repr__(self):
         return '<SelfReference: ' + str(self.value) + '>'
+
+    def copy(self):
+        return ConcreteSelfReference(self.value)
 
 class ConcreteFunctionType(Concrete):
     def __getitem__(self, index):
@@ -267,6 +313,9 @@ class ConcreteFunctionType(Concrete):
 
     def __repr__(self):
         return '<FunctionType: ' + str(self.value) + '>'
+
+    def copy(self):
+        return ConcreteFunctionType(self.value.copy())
 
 class ConcreteFunction(Concrete):
     def __init__(self, context, bind, statements, type=None):
@@ -299,7 +348,6 @@ class ConcreteFunction(Concrete):
         
         new_context = None
         if self.type and isinstance(self.type, ConcreteFunctionType):
-            print(self.type)
             new_context = self.context.create_function_context(self.bind, value, self.type[0])
         else:
             new_context = self.context.create_function_context(self.bind, value)
@@ -335,6 +383,9 @@ class ConcreteExternalFunction(Concrete):
     def __repr__(self):
         return '<ExternalFunction: ' + str(self.value.__name__) + '>'
 
+    def copy(self):
+        return ConcreteExternalFunction(self.context.copy(), self.value, self.type.copy())
+
     def set_type(self, type):
         self.type = type
 
@@ -346,7 +397,12 @@ class ConcreteExternalFunction(Concrete):
             return self
 
         new_context = self.context.copy()
-        return self.value(new_context, value).resolve()
+        
+        out = self.value(new_context, value).resolve()
+        if not out:
+            raise Exception('External Function returned None')
+        
+        return out
 
 class ConcreteExternalData(Concrete):
     def __init__(self, value):
@@ -360,3 +416,6 @@ class ConcreteExternalData(Concrete):
 
     def __repr__(self):
         return '<ExternalData>'
+
+    def copy(self):
+        return ConcreteExternalData(self.value.copy())

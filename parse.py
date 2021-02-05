@@ -1,5 +1,6 @@
 from lark import Lark, Transformer
 from state import Integer, Decimal, String, List, Set, Object, Empty, Ellipsis, Variable, Expression, AlgebraicType, FunctionType, Function, Statement, MatterStatement, ExpressionStatement
+import re
 
 class TreeTransformer(Transformer):
     def integer(self, values):
@@ -9,8 +10,10 @@ class TreeTransformer(Transformer):
         return Decimal(float(values[0]))
 
     def string(self, values):
-        return String(values[0].replace('\'', ''))
-
+        if len(values) > 0:
+            return String(re.sub('\\\\\\\\', '\\\\', re.sub('\\\\([^\\\\])', '\g<1>', values[0])))
+        else:
+            return String('')
     
     def list(self, values):
         return List(values)
@@ -166,7 +169,8 @@ class Parser:
             _algebraic_seperator : "|"
             integer : /-?\d+/
             decimal : /-?\d+\.\d*/
-            string : /\'[^\']*\'/
+            _string_inner: /([^\\\\']|\\\\.)+/
+            string : "'" _string_inner "'" | "''"
             _end_statement : ";"
             _close_function : _close_curly_brace
             _open_list : "["
@@ -178,6 +182,7 @@ class Parser:
             _open_object : "{"
             _close_object : _close_curly_brace
             _close_curly_brace : "}"
+            
             %import common.WS
             %ignore WS
         """, parser="lalr")

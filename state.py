@@ -151,19 +151,19 @@ class MatterStatement(Statement):
         self.type = type
 
     def execute(self, context):
-        # Modify context so they can self reference 
+        # Modify context so algebraic types can self reference 
         # Matter Statements can't be nested so this should be fine
-        # When the actual value is set this is overwritten and only references in the actual object remain
-        context.scope.set_value_type(self.identifier, concrete.ConcreteSelfReference(self.identifier), concrete.ConcreteUndefined(), context)
+        if isinstance(self.value, Expression) and isinstance(self.value.value[-1], AlgebraicType):
+            context.scope.set_value_type(self.identifier, concrete.ConcreteSelfReference(self.identifier), None, context)
 
         if self.value:
             if self.type:
                 context.scope.set_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context), context)
             else:
-                context.scope.set_value_type(self.identifier, self.value.evaluate(context), concrete.ConcreteUndefined(), context)
+                context.scope.set_value_type(self.identifier, self.value.evaluate(context), None, context)
         else:
             if self.type: 
-                context.scope.set_value_type(self.identifier, concrete.ConcreteUndefined(), self.type.evaluate(context), context)
+                context.scope.set_value_type(self.identifier, None, self.type.evaluate(context), context)
             else:
                 raise Exception('No value or type specified in statement!')
 
