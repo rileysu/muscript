@@ -21,11 +21,11 @@ class String(Value):
 
 class List(Value):
     def evaluate(self, context):
-        return concrete.ConcreteList(list(map(lambda x: x.evaluate(context), self.value)))
+        return concrete.ConcreteList(tuple(map(lambda x: x.evaluate(context), self.value)))
 
 class Set(Value):
     def evaluate(self, context):
-        return concrete.ConcreteSet(set(map(lambda x: x.evaluate(context), self.value)))
+        return concrete.ConcreteSet(frozenset(map(lambda x: x.evaluate(context), self.value)))
 
 class Object(Value):
     def __init__(self, values):

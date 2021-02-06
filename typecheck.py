@@ -51,7 +51,7 @@ def is_type(value, type, context):
             return False
     elif isinstance(type, concrete.ConcreteSet):
         if isinstance(value, concrete.ConcreteSet):
-            return all(any(is_type(y, x, context) for y in type.value) for x in value.value)
+            return all(any(is_type(x, y, context) for y in type.value) for x in value.value)
         else:
             return False
     elif isinstance(type, concrete.ConcreteObject):

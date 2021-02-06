@@ -103,7 +103,7 @@ class ConcreteList(Concrete):
             return self.copy()
         elif isinstance(value, ConcreteList):
             if not (self.is_infinite() or value.is_infinite()):
-                return ConcreteList(self.value.copy() + value.value.copy())
+                return ConcreteList(self.value + value.value)
             else:
                 raise Exception('Could not coalesce lists where at least one is infinite')
         else:
@@ -126,7 +126,7 @@ class ConcreteSet(Concrete):
         if isinstance(value, ConcreteUndefined):
             return self.copy()
         elif isinstance(value, ConcreteSet):
-            return ConcreteSet(self.value.copy() + value.value.copy())
+            return ConcreteSet(self.value.union(value.value))
         else:
             return value.copy()
 
@@ -147,7 +147,7 @@ class ConcreteObject(Concrete):
         return isinstance(value, type(self)) and self.values == value.values and self.types == value.types
 
     def __hash__(self):
-        return hash((self.values, self.types))
+        return hash((frozenset(self.values), frozenset(self.types)))
 
     def __repr__(self):
         return '<Object: ' + str(self.values) + ' ' + str(self.types) + '>'

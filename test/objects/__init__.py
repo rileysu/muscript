@@ -11,16 +11,16 @@ class TestObjects(unittest.TestCase):
             concrete.ConcreteObject({
                 'int': concrete.ConcreteInteger(1),
                 'dec': concrete.ConcreteDecimal(1.1),
-                'list': concrete.ConcreteList([
+                'list': concrete.ConcreteList((
                     concrete.ConcreteInteger(1),
                     concrete.ConcreteInteger(2),
                     concrete.ConcreteInteger(3)
-                ]),
-                'set': concrete.ConcreteSet({
+                )),
+                'set': concrete.ConcreteSet(frozenset({
                     concrete.ConcreteInteger(1),
                     concrete.ConcreteInteger(2),
                     concrete.ConcreteInteger(3)
-                }),
+                })),
                 'object': concrete.ConcreteObject({
                     'a': concrete.ConcreteInteger(1),
                     'b': concrete.ConcreteInteger(2)
@@ -66,11 +66,11 @@ class TestObjects(unittest.TestCase):
             concrete.ConcreteObject({
                 'int': concrete.ConcreteInteger(1),
                 'dec': concrete.ConcreteDecimal(1.1),
-                'list': concrete.ConcreteList([
+                'list': concrete.ConcreteList((
                     concrete.ConcreteInteger(1),
                     concrete.ConcreteInteger(2),
                     concrete.ConcreteInteger(3)
-                ]),
+                )),
                 'fun': function,
                 'otherobj': concrete.ConcreteObject({
                     'a': concrete.ConcreteInteger(1),
