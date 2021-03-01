@@ -81,7 +81,7 @@ class Ellipsis(Value):
 
 class Variable(Value):
     def evaluate(self, context):
-        if context.scope.has_value(self.value[0]):
+        if context.scope.has_key(self.value[0]):
 
             type = context.scope.get_type(self.value[0])
             
@@ -158,12 +158,12 @@ class MatterStatement(Statement):
 
         if self.value:
             if self.type:
-                context.scope.set_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context), context)
+                context.scope.modify_value_type(self.identifier, self.value.evaluate(context), self.type.evaluate(context), context)
             else:
-                context.scope.set_value_type(self.identifier, self.value.evaluate(context), None, context)
+                context.scope.modify_value_type(self.identifier, self.value.evaluate(context), None, context)
         else:
             if self.type: 
-                context.scope.set_value_type(self.identifier, None, self.type.evaluate(context), context)
+                context.scope.modify_value_type(self.identifier, None, self.type.evaluate(context), context)
             else:
                 raise Exception('No value or type specified in statement!')
 

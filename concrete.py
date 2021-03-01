@@ -197,7 +197,7 @@ class ConcreteMatter(Concrete):
     def coalesce(self, context, value):
         if isinstance(value, ConcreteUndefined):
             return self.value.copy() 
-        elif isinstance(self.value, ConcreteFunction):
+        elif isinstance(self.value, (ConcreteFunction, ConcreteExternalFunction)):
             func = self.value.copy()
             func.type = self.type
             return func.coalesce(context, value)
@@ -355,14 +355,14 @@ class ConcreteFunction(Concrete):
         new_context.execute(self.statements)
 
         return_value = new_context.return_value
-
-        self.context.close_function_context(new_context)
         
         # Also check if the return is another function and apply correct type signature
         if self.type and isinstance(self.type, ConcreteFunctionType):
             if len(self.type[1:]) > 1:
                 if isinstance(return_value, ConcreteFunction) or isinstance(return_value, ConcreteExternalFunction):
                     return_value.type = ConcreteFunctionType(self.type[1:])
+                else:
+                    raise typecheck.TypeException('Expected function but instead got: ', return_value)
             else:
                 typecheck.check_type(return_value, self.type[-1], context)
 
@@ -384,7 +384,7 @@ class ConcreteExternalFunction(Concrete):
         return '<ExternalFunction: ' + str(self.value.__name__) + '>'
 
     def copy(self):
-        return ConcreteExternalFunction(self.context.copy(), self.value, self.type.copy())
+        return ConcreteExternalFunction(self.context.copy(), self.value, self.type.copy() if self.type else None)
 
     def set_type(self, type):
         self.type = type

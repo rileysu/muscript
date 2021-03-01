@@ -1,5 +1,6 @@
 io = import 'io';
+ctrl = import 'control';
 
-a = a | 0;
-
-io.print a;
+ctrl.while @{ return 0; } @{
+  return ();
+};

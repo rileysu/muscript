@@ -1,40 +1,64 @@
 import concrete
 import typecheck
 
+class ContextVariable():
+    def __init__(self, value, type):
+        self.value = value
+        self.type = type
+
 class Scope():
-    def __init__(self, values, types):
-        self.values = values
-        self.types = types
+    def __init__(self, values, types={}):
+        self.values = {}
+
+        for key in values:
+            self.values[key] = ContextVariable(values[key], 
+                    types[key] if key in types else concrete.ConcreteUndefined())
 
     def get_value(self, key):
-        return self.values[key]
+        return self.values[key].value
 
     def get_type(self, key):
-        return self.types[key]
+        return self.values[key].type
 
+    # Overwrites variables which could be used in previous contexts
+    # Copied contexts will not propogate changes to parent contexts
     def set_value_type(self, key, value, type, context):
         if type == None:
-            if self.has_type(key):
-                type = self.get_type(key)
-            else:
-                type = concrete.ConcreteUndefined()
+            type = self.get_type(key) if self.has_key(key) else concrete.ConcreteUndefined()
 
         if value == None: 
-            value = concrete.ConcreteUndefined()
-        else:
+            value = self.get_value(key) if self.has_key(key) else concrete.ConcreteUndefined()
+        
+        if value != None and value != None:
             typecheck.check_type(value, type, context)
 
-        self.values[key] = value
-        self.types[key] = type
+        self.values[key] = ContextVariable(value, type)
 
-    def has_value(self, key):
+    # Modifies variables which could be used in previous contexts
+    # Copied contexts will propagate changes to parent contexts
+    def modify_value_type(self, key, value, type, context):
+        if not self.has_key(key):
+            self.set_value_type(key, value, type, context)
+        else:
+            if type == None:
+                type = self.get_type(key)
+
+            if value == None:
+                value = self.get_value(key)
+
+            if value != None and value != None:
+                typecheck.check_type(value, type, context)
+            
+            self.values[key].value = value
+            self.values[key].type = type
+    
+    def has_key(self, key):
         return key in self.values
 
-    def has_type(self, key):
-        return key in self.types
-
     def copy(self):
-        return Scope(self.values.copy(), self.types.copy())
+        new_scope = Scope({})
+        new_scope.values = self.values.copy()
+        return new_scope
 
 class Context():
     def __init__(self, scope, is_halted=False, is_returnable=True, parent_object=None):
@@ -85,12 +109,3 @@ class Context():
             new_scope.set_value_type(bind, value, type, self)
 
         return Context(new_scope, is_returnable=True)
-
-    # Apply changed variables to parent context
-    def close_function_context(self, context):
-        for attribute in self.scope.values:
-            if context.scope.has_value(attribute):
-                self.scope.set_value_type(attribute, 
-                        context.scope.get_value(attribute), 
-                        context.scope.get_type(attribute),
-                        self)

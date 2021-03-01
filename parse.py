@@ -145,8 +145,11 @@ class Parser:
                 | set 
                 | object
                 | (_open_paren expression _close_paren))
+                | (_precidence expression)
             expression : (algebraic_type | function_type | _base_expression)+
+            
             function : _open_function statement+ _close_function
+            
             list : _open_list [expression (_seperator expression)*] _close_list
             
             set : _open_set [expression (_seperator expression)*] _close_set
@@ -164,6 +167,7 @@ class Parser:
             _assign : "="
             _typeassign : ":="
             _access: "."
+            _precidence: "$"
             name : /[_a-zA-Z][_\-a-zA-Z0-9]*/
             _function_arrow : "->"
             _algebraic_seperator : "|"
